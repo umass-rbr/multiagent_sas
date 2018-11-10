@@ -50,11 +50,11 @@ def power_set(iterable):
 class RTAMDP(object):
     """ The high-level task MDP that decides which tasks to complete. """
 
-    def __init__(self,T,R,H=4,delta=0.5):
+    def __init__(self,tasks,robots,H=4,delta=0.5):
         """ The constructor for the TaskMDP object. """
 
-        self.T = T
-        self.R = R
+        self.tasks = tasks
+        self.robots = robots
         self.H = H
         self.delta = delta
 
@@ -91,11 +91,11 @@ class RTAMDP(object):
                 S -- the list of states.
         """
 
-        matchings = list(itertools.product(self.T,self.R))
+        matchings = list(itertools.product(self.tasks,self.robots))
         times = [i for i in range(self.H/self.delta)]
 
         S = list(itertools.product(times,list(power_set(matchings))))
-        S = list(itertools.product(S,list(power_set(self.R))))
+        S = list(itertools.product(S,list(power_set(self.robots))))
 
         return S
 
@@ -126,34 +126,37 @@ class RTAMDP(object):
             for a, action in enumerate(self.actions):
                 for sp, statePrime in enumerate(self.states):
                     S[s][a][sp] = sp
-                    T[s][a][sp] = 1.0
 
-                    probabilityOfNewIssue = 0.1
-                    probabilityOfSuccessAtRemovingOrPreventingIssue = 1.0
+                    if statePrime.time() == state.time()+1:
+                        T[s][a][sp] = 1.0
 
-                    for issue in self.issues:
-                        if issue in state and issue == action and issue in statePrime:
-                            T[s][a][sp] *= (1.0 - probabilityOfSuccessAtRemovingOrPreventingIssue)
-                        elif issue in state and issue == action and issue not in statePrime:
-                            T[s][a][sp] *= probabilityOfSuccessAtRemovingOrPreventingIssue
-                        elif issue in state and issue != action and issue in statePrime:
-                            T[s][a][sp] *= 1.0
-                        elif issue in state and issue != action and issue not in statePrime:
-                            T[s][a][sp] *= 0.0
-                        elif issue not in state and issue == action and issue in statePrime:
-                            T[s][a][sp] *= (1.0 - probabilityOfSuccessAtRemovingOrPreventingIssue)
-                        elif issue not in state and issue == action and issue not in statePrime:
-                            T[s][a][sp] *= probabilityOfSuccessAtRemovingOrPreventingIssue
-                        elif issue not in state and issue != action and issue in statePrime:
-                            T[s][a][sp] *= probabilityOfNewIssue
-                        elif issue not in state and issue != action and issue not in statePrime:
-                            T[s][a][sp] *= (1.0 - probabilityOfNewIssue)
+                    for (task,robot) in zip(a):
+                        
+                        if (statePrime.time() <= task.start() or statePrime.time() > task.end()) and task not in statePrime.tasks():
+                            T[s][a][sp] = 0.0
+                            continue
+                        if robot is None and task not in statePrime.tasks():
+                            T[s][a][sp] = 0.0
+                            continue
+
+                        if state.robots()[robot.id()].get_condition() == 0 and statePrime.robots()[robot.id()].get_condition() == 0:
+                            if task not in statePrime.tasks(): T[s][a][sp] = 0.0
+                            continue
+                        elif state.robots()[robot.id()].get_condition() == 0 and statePrime.robots()[robot.id()].get_condition() == 1:
+                            T[s][a][sp] = 0.0
+                            continue
+                        elif state.robots()[robot.id()].get_condition() == 1 and statePrime.robots()[robot.id()].get_condition() == 0:
+                            if task in statePrime.tasks(): T[s][a][sp] *= robot.get_break_probability()
+                            else: T[s][a][sp] = 0.0 
+                        else:
+                            if task not in statePrime.tasks(): T[s][a][sp] *= (1.0 - robot.get_break_probability())
+                            else: T[s][a][sp] = 0.0
 
                 # TODO: Check if T sums to 1.
-                #check = 0.0
-                #for sp, statePrime in enumerate(self.states):
-                #    check += T[s][a][sp]
-                #print(check)
+                check = 0.0
+                for sp, statePrime in enumerate(self.states):
+                   check += T[s][a][sp]
+                print(check)
 
         return S, T
 
@@ -166,20 +169,16 @@ class RTAMDP(object):
                 R   --  The n-m lists of rewards.
         """
 
-        R = [[[0.0 for s in range(self.mdp.n)] for a in range(self.mdp.m)] for s in range(self.mdp.n)]
+        R = [[[0.0 for sp in range(self.mdp.n)] for a in range(self.mdp.m)] for s in range(self.mdp.n)]
 
         for s, state in enumerate(self.states):
             for a, action in enumerate(self.actions):
-                for s2, state2 in enumerate(self.states):
-                    for task in state.Tasks():
-                        if task in state2.tasks() or task.end() < state2.time():
-                            R[s][a][s2] -= self.delta
+                for sp, statePrime in enumerate(self.states):
+                    for task in state.tasks():
+                        if task in statePrime.tasks() or task.end() < statePrime.time():
+                            R[s][a][sp] -= self.delta
                         else:
-                            R[s][a][s2] -= task.robot().calculate_time(task.pickup(),task.dropoff())
-
-                for importance, issue in enumerate(self.issues):
-                    if issue in state:
-                        R[s][a] -= float(importance + 1)
+                            R[s][a][sp] -= task.robot().calculate_time(task.pickup(),task.dropoff())
 
         return R
 
