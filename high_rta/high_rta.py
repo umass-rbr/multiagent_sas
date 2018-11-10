@@ -106,7 +106,7 @@ class RTAMDP(object):
                 A -- the list of actions.
         """
 
-        #A = list(power_set(list(itertools.product(self.T,self.R))))
+        A = list(power_set(list(itertools.product(self.T,self.R))))
 
 
     def _compute_state_transitions(self):
@@ -131,7 +131,7 @@ class RTAMDP(object):
                         T[s][a][sp] = 1.0
 
                     for (task,robot) in zip(a):
-                        
+
                         if (statePrime.time() <= task.start() or statePrime.time() > task.end()) and task not in statePrime.tasks():
                             T[s][a][sp] = 0.0
                             continue
