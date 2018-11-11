@@ -105,9 +105,8 @@ class RTAMDP(object):
             Returns:
                 A -- the list of actions.
         """
-
         A = list(power_set(list(itertools.product(self.T,self.R))))
-
+        A = [a for a in A if len(a) <= len(self.tasks)]
 
     def _compute_state_transitions(self):
         """ Compute the state transitions for the TaskMDP.
@@ -135,7 +134,7 @@ class RTAMDP(object):
                         if (statePrime.time() <= task.start() or statePrime.time() > task.end()) and task not in statePrime.tasks():
                             T[s][a][sp] = 0.0
                             continue
-                        if robot is None and task not in statePrime.tasks():
+                        if task in state.tasks() and task not in a and task not in statePrime.tasks():
                             T[s][a][sp] = 0.0
                             continue
 
