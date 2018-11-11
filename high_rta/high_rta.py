@@ -108,6 +108,25 @@ class RTAMDP(object):
         A = list(power_set(list(itertools.product(self.T,self.R))))
         A = [a for a in A if len(a) <= len(self.tasks)]
 
+        new_A = []
+        for a in A:
+            t_check = [0 for t in self.Tasks]
+            r_check = [0 for r in self.Robots]
+            check = True
+            for (t,r) in p:
+                if t_check[t] == 1:
+                    check = False
+                    break
+                elif r_check[r] == 1:
+                    check = False
+                    break
+                else:
+                    t_check[t] = 1
+                    r_check[r] = 1
+            if check is True: new_A.append(a)
+
+        return new_A
+
     def _compute_state_transitions(self):
         """ Compute the state transitions for the TaskMDP.
 
