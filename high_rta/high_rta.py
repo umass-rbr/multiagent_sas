@@ -204,7 +204,7 @@ class RTAMDP(object):
         """ Initialize the nova MDP using the map from 'snap' Cartographer. """
 
         self.states = _compute_states(self)
-        self.actions = list(power_set(list(itertools.product(self.T,self.R))))
+        self.actions = _compute_actions(self)
 
         self.mdp = MDP()
         self.mdp.n = int(len(self.states))
