@@ -89,13 +89,15 @@ class RTAMDP(object):
 
             Returns:
                 S -- the list of states.
+                s in S := (time, [current-tasks], [robot-conditions], [task-robot-assignments])
         """
 
         matchings = list(itertools.product(self.tasks,self.robots))
-        times = [i for i in range(self.H/self.delta)]
+        times = [i for i in range(self.H)]
 
-        S = list(itertools.product(times,list(power_set(matchings))))
-        S = list(itertools.product(S,list(power_set(self.robots))))
+        S = list(itertools.product(times,list(power_set(self.tasks))))
+        S = list(itertools.product(S,list(itertools.product([0,1],repeat=len(self.robots)))))
+        S = list(itertools.product(S,list(power_set(matchings))))
 
         return S
 
@@ -145,29 +147,28 @@ class RTAMDP(object):
                 for sp, statePrime in enumerate(self.states):
                     S[s][a][sp] = sp
 
-                    if statePrime.time() == state.time()+1:
+                    if statePrime[0] == state[0] + 1
                         T[s][a][sp] = 1.0
 
                     for (task,robot) in zip(a):
 
-                        if (statePrime.time() <= task.start() or statePrime.time() > task.end()) and task not in statePrime.tasks():
+                        if (statePrime[0] <= task.start() or statePrime[0] > task.end()) and task not in statePrime[1]:
                             T[s][a][sp] = 0.0
                             continue
-                        if task in state.tasks() and task not in a and task not in statePrime.tasks():
+                        if task in state[1] and task not in a and task not in statePrime[1]:
                             T[s][a][sp] = 0.0
                             continue
-
-                        if state.robots()[robot.id()].get_condition() == 0 and statePrime.robots()[robot.id()].get_condition() == 0:
-                            if task not in statePrime.tasks(): T[s][a][sp] = 0.0
+                        if state[2][robot.id()] == 0 and statePrime[2][robot.id()] == 0:
+                            if task not in statePrime[1]: T[s][a][sp] = 0.0
                             continue
-                        elif state.robots()[robot.id()].get_condition() == 0 and statePrime.robots()[robot.id()].get_condition() == 1:
+                        elif state[2][robot.id()] == 0 and statePrime[2][robot.id()] == 1:
                             T[s][a][sp] = 0.0
                             continue
-                        elif state.robots()[robot.id()].get_condition() == 1 and statePrime.robots()[robot.id()].get_condition() == 0:
-                            if task in statePrime.tasks(): T[s][a][sp] *= robot.get_break_probability()
+                        elif state[2][robot.id()] == 1 and statePrime[2][robot.id()] == 0:
+                            if task in statePrime[1]: T[s][a][sp] *= robot.get_break_probability()
                             else: T[s][a][sp] = 0.0 
                         else:
-                            if task not in statePrime.tasks(): T[s][a][sp] *= (1.0 - robot.get_break_probability())
+                            if task not in statePrime[1]: T[s][a][sp] *= (1.0 - robot.get_break_probability())
                             else: T[s][a][sp] = 0.0
 
                 # TODO: Check if T sums to 1.
@@ -211,7 +212,7 @@ class RTAMDP(object):
         self.mdp.ns = int(len(self.states))
         self.mdp.m = int(len(self.actions))
         self.mdp.gamma = float(0.99)
-        self.mdp.horizon = int(1000)
+        self.mdp.horizon = int(self.H)
         self.mdp.epsilon = float(0.001)
         self.mdp.s0 = int(0)
         self.mdp.ng = int(0)
@@ -311,5 +312,3 @@ class RTAMDP(object):
         """
 
         self.currentState = self.states.index(successor)
-
-
