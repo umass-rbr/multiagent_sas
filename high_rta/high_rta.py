@@ -151,20 +151,19 @@ class RTAMDP(object):
                         T[s][a][sp] = 1.0
 
                     for (task,robot) in zip(a):
-
                         if (statePrime[0] <= task.start() or statePrime[0] > task.end()) and task not in statePrime[1]:
                             T[s][a][sp] = 0.0
                             continue
-                        if task in state[1] and task not in a and task not in statePrime[1]:
+                        if task not in state[1]:
                             T[s][a][sp] = 0.0
                             continue
-                        if state[2][robot.id()] == 0 and statePrime[2][robot.id()] == 0:
+                        if state[2][robot.id()] > 0 and statePrime[2][robot.id()] > 0:
                             if task not in statePrime[1]: T[s][a][sp] = 0.0
                             continue
-                        elif state[2][robot.id()] == 0 and statePrime[2][robot.id()] == 1:
+                        elif state[2][robot.id()] > 0 and statePrime[2][robot.id()] == 0:
                             T[s][a][sp] = 0.0
                             continue
-                        elif state[2][robot.id()] == 1 and statePrime[2][robot.id()] == 0:
+                        elif state[2][robot.id()] == 0 and statePrime[2][robot.id()] > 0:
                             if task in statePrime[1]: T[s][a][sp] *= robot.get_break_probability()
                             else: T[s][a][sp] = 0.0 
                         else:
@@ -185,7 +184,7 @@ class RTAMDP(object):
             This assumes states, actions, n, and m are set.
 
             Returns:
-                R   --  The n-m lists of rewards.
+                R   --  The n-m-ns lists of rewards.
         """
 
         R = [[[0.0 for sp in range(self.mdp.n)] for a in range(self.mdp.m)] for s in range(self.mdp.n)]
@@ -193,11 +192,15 @@ class RTAMDP(object):
         for s, state in enumerate(self.states):
             for a, action in enumerate(self.actions):
                 for sp, statePrime in enumerate(self.states):
-                    for task in state.tasks():
-                        if task in statePrime.tasks() or task.end() < statePrime.time():
+                    for (task,robot) in zip(a):
+                        if task.end() < statePrime[0]:
                             R[s][a][sp] -= self.delta
+                        elif task in statePrime[1]:
+                            R[s][a][sp] -= self.delta
+                            if state[2][robot.id()] == 0 and statePrime[2][robot.id()] > 0:
+                                R[s][a][sp] -= robot.get_break_cost(statePrime[2][robot.id()])
                         else:
-                            R[s][a][sp] -= task.robot().calculate_time(task.pickup(),task.dropoff())
+                            R[s][a][sp] -= robot.calculate_path_cost(task.pickup(),task.dropoff())
 
         return R
 
