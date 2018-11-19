@@ -24,6 +24,8 @@ import os
 import sys
 import time
 
+import Robot
+
 thisFilePath = os.path.dirname(os.path.realpath(__file__))
 
 sys.path.append(os.path.join(thisFilePath, "..", "..", "nova", "python"))
@@ -53,10 +55,10 @@ class RTAMDP(object):
     def __init__(self,tasks,robots,H=4,delta=0.5):
         """ The constructor for the TaskMDP object. """
 
-        self.tasks = tasks
-        self.robots = robots
-        self.H = H
-        self.delta = delta
+        self.tasks = tasks #Tasks are tuples: <start_time, end_time, pickup, dropoff>
+        self.robots = robots #Robots are objects implemented in Robot.py
+        self.H = H #H is the Horizon
+        self.delta = delta #delta is the length of each 'action'
 
         self.mdp = None
         self.policy = None
@@ -92,12 +94,17 @@ class RTAMDP(object):
                 s in S := (time, [current-tasks], [robot-conditions], [task-robot-assignments])
         """
 
-        matchings = list(itertools.product(self.tasks,self.robots))
+        #matchings = list(itertools.product(self.tasks,self.robots))
         times = [i for i in range(self.H)]
 
         S = list(itertools.product(times,list(power_set(self.tasks))))
+        '''
+        It is assumed that we cannot have 'duplicate' i.e. identical tasks in state s
+        at the same time, as we assume that they could be 'bundled' together into a single
+        bigger task.
+        '''
         S = list(itertools.product(S,list(itertools.product([0,1],repeat=len(self.robots)))))
-        S = list(itertools.product(S,list(power_set(matchings))))
+        #S = list(itertools.product(S,list(power_set(matchings))))
 
         return S
 
@@ -147,17 +154,18 @@ class RTAMDP(object):
                 for sp, statePrime in enumerate(self.states):
                     S[s][a][sp] = sp
 
-                    if statePrime[0] == state[0] + 1
+                    if statePrime[0] == state[0] + 1:
                         T[s][a][sp] = 1.0
 
-                    for (task,robot) in zip(a):
+                    for (task,robot) in zip(action):
 
-                        if (statePrime[0] <= task.start() or statePrime[0] > task.end()) and task not in statePrime[1]:
+                        if (statePrime[0] <= task[0] or statePrime[0] > task[1]) and task not in statePrime[1]:
                             T[s][a][sp] = 0.0
                             continue
-                        if task in state[1] and task not in a and task not in statePrime[1]:
+                        if task not in state[1]:
                             T[s][a][sp] = 0.0
                             continue
+                        #-----Task in state below-----#
                         if state[2][robot.id()] == 0 and statePrime[2][robot.id()] == 0:
                             if task not in statePrime[1]: T[s][a][sp] = 0.0
                             continue
@@ -165,10 +173,10 @@ class RTAMDP(object):
                             T[s][a][sp] = 0.0
                             continue
                         elif state[2][robot.id()] == 1 and statePrime[2][robot.id()] == 0:
-                            if task in statePrime[1]: T[s][a][sp] *= robot.get_break_probability()
+                            if task in statePrime[1]: T[s][a][sp] *= robot.get_break_probability(task[2],task[3])
                             else: T[s][a][sp] = 0.0 
                         else:
-                            if task not in statePrime[1]: T[s][a][sp] *= (1.0 - robot.get_break_probability())
+                            if task not in statePrime[1]: T[s][a][sp] *= (1.0 - robot.get_break_probability(task[2],task[3]))
                             else: T[s][a][sp] = 0.0
 
                 # TODO: Check if T sums to 1.
@@ -193,11 +201,12 @@ class RTAMDP(object):
         for s, state in enumerate(self.states):
             for a, action in enumerate(self.actions):
                 for sp, statePrime in enumerate(self.states):
-                    for task in state.tasks():
-                        if task in statePrime.tasks() or task.end() < statePrime.time():
+                    
+                    for (task,robot) in zip(action):
+                        if task in statePrime[1]:
                             R[s][a][sp] -= self.delta
                         else:
-                            R[s][a][sp] -= task.robot().calculate_time(task.pickup(),task.dropoff())
+                            R[s][a][sp] -= robot.calculate_time(task[2],task[3])
 
         return R
 
@@ -312,3 +321,17 @@ class RTAMDP(object):
         """
 
         self.currentState = self.states.index(successor)
+
+def main():
+    T = [ (0,3,0,1),
+          (0,2,1,0),
+          (1,4,1,2),
+          (3,4,2,1),
+          (3,4,3,2) ]
+    R = [Robot.robot(0,0,0), Robot.robot(1,1,3), Robot.robot(2,2,2)]
+
+    rta = RTA(T,R)
+    rta.initalize()
+    rta.solve()
+
+main()
