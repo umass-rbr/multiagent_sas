@@ -165,11 +165,12 @@ class RTAMDP(object):
                         if task not in state[1]:
                             T[s][a][sp] = 0.0
                             continue
+
                         #-----Task in state below-----#
                         if state[2][robot.id()] == 0 and statePrime[2][robot.id()] == 0:
                             if task not in statePrime[1]: T[s][a][sp] = 0.0
                             continue
-                        elif state[2][robot.id()] == 0 and statePrime[2][robot.id()] == 1:
+                        elif state[2][robot.id()] > 0 and statePrime[2][robot.id()] == 0:
                             T[s][a][sp] = 0.0
                             continue
                         elif state[2][robot.id()] == 1 and statePrime[2][robot.id()] == 0:
@@ -193,21 +194,21 @@ class RTAMDP(object):
             This assumes states, actions, n, and m are set.
 
             Returns:
-                R   --  The n-m lists of rewards.
+                R   --  The n-m-ns lists of rewards.
         """
 
         R = [[[0.0 for sp in range(self.mdp.n)] for a in range(self.mdp.m)] for s in range(self.mdp.n)]
 
         for s, state in enumerate(self.states):
             for a, action in enumerate(self.actions):
-                for sp, statePrime in enumerate(self.states):
-                    
+                for sp, statePrime in enumerate(self.states):                
                     for (task,robot) in zip(action):
                         if task in statePrime[1]:
                             R[s][a][sp] -= self.delta
+                            if state[2][robot.id()] == 0 and statePrime[2][robot.id()] > 0:
+                                R[s][a][sp] -= robot.get_break_cost(statePrime[2][robot.id()])
                         else:
                             R[s][a][sp] -= robot.calculate_time(task[2],task[3])
-
         return R
 
     def initialize(self):
