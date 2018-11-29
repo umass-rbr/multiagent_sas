@@ -268,7 +268,7 @@ class RTAMDP(object):
         self.mdp.n = int(len(self.states))
         self.mdp.ns = int(len(self.states))
         self.mdp.m = int(len(self.actions))
-        self.mdp.gamma = float(1.0)
+        self.mdp.gamma = float(0.99)
         self.mdp.horizon = int(self.H)
         self.mdp.epsilon = float(0.001)
         self.mdp.s0 = int(len(self.states)/self.H)-1
@@ -296,7 +296,7 @@ class RTAMDP(object):
         timing = time.time()
         self.policy = algorithm.solve()
         timing = time.time() - timing
-        #print(timing)
+
         print(self.mdp)
         print(self.policy)
 
