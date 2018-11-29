@@ -30,10 +30,10 @@ thisFilePath = os.path.dirname(os.path.realpath(__file__))
 
 sys.path.append(os.path.join(thisFilePath, "..", "..", "nova", "python"))
 from nova.mdp import MDP
-from nova.mdp_vi import MDPVI
+from nova.mdp_vi import MDPValueIterationCPU
 from nova.mdp_value_function import MDPValueFunction
 
-import rospy
+#import rospy
 
 import itertools as it
 import ctypes as ct
@@ -91,47 +91,40 @@ class RTAMDP(object):
 
             Returns:
                 S -- the list of states.
-                s in S := (time, [current-tasks], [robot-conditions], [task-robot-assignments])
+                s in S := (time, {current-tasks}, [robot-conditions])
         """
 
-        #matchings = list(itertools.product(self.tasks,self.robots))
+        #matchings = list(it.product(self.tasks,self.robots))
         times = [i for i in range(self.H)]
-
-        S = list(itertools.product(times,list(power_set(self.tasks))))
-        '''
-        It is assumed that we cannot have 'duplicate' i.e. identical tasks in state s
-        at the same time, as we assume that they could be 'bundled' together into a single
-        bigger task.
-        '''
-        S = list(itertools.product(S,list(itertools.product([0,1],repeat=len(self.robots)))))
-        #S = list(itertools.product(S,list(power_set(matchings))))
-
+        robot_list = [list(r) for r in list(it.product([0,1],repeat=len(self.robots)-1))]
+        for r in robot_list: r.append(1)
+        S = list(it.product(times,list(power_set(self.tasks)),robot_list))
         return S
-
+        
     def _compute_actions(self):
         """ Compute the set of all actions for the RTAMDP.
 
             Returns:
                 A -- the list of actions.
         """
-        A = list(power_set(list(itertools.product(self.T,self.R))))
+        A = list(power_set(list(it.product(self.tasks,self.robots))))
         A = [a for a in A if len(a) <= len(self.tasks)]
 
         new_A = []
         for a in A:
-            t_check = [0 for t in self.Tasks]
-            r_check = [0 for r in self.Robots]
+            t_check = [0 for t in self.tasks]
+            r_check = [0 for r in self.robots]
             check = True
-            for (t,r) in p:
-                if t_check[t] == 1:
+            for (t,r) in a:
+                if t_check[self.tasks.index(t)] == 1:
                     check = False
                     break
-                elif r_check[r] == 1:
+                elif r_check[self.robots.index(r)] == 1:
                     check = False
                     break
                 else:
-                    t_check[t] = 1
-                    r_check[r] = 1
+                    t_check[self.tasks.index(t)] = 1
+                    r_check[self.robots.index(r)] = 1
             if check is True: new_A.append(a)
 
         return new_A
@@ -150,42 +143,94 @@ class RTAMDP(object):
         T = [[[float(0.0) for sp in range(self.mdp.ns)] for a in range(self.mdp.m)] for s in range(self.mdp.n)]
 
         for s, state in enumerate(self.states):
+            if state[0] == self.H -1:
+                T[s][a][s] = 1.0
+                continue
             for a, action in enumerate(self.actions):
+                tasks = []
+                #robots = []
+                for (task,robot) in action:
+                    tasks.append(task)
+                    #robots.append(robot)
                 for sp, statePrime in enumerate(self.states):
                     S[s][a][sp] = sp
 
-                    if statePrime[0] == state[0] + 1:
-                        T[s][a][sp] = 1.0
+                    #Can only go to states at next time step.
+                    if statePrime[0] != state[0] + 1:
+                        T[s][a][sp] = 0.0
+                        continue
 
-                    for (task,robot) in zip(action):
-
-                        if (statePrime[0] <= task[0] or statePrime[0] > task[1]) and task not in statePrime[1]:
-                            T[s][a][sp] = 0.0
-                            continue
-                        if task not in state[1]:
-                            T[s][a][sp] = 0.0
-                            continue
-
-                        #-----Task in state below-----#
-                        if state[2][robot.id()] == 0 and statePrime[2][robot.id()] == 0:
-                            if task not in statePrime[1]: T[s][a][sp] = 0.0
-                            continue
-                        elif state[2][robot.id()] > 0 and statePrime[2][robot.id()] == 0:
-                            T[s][a][sp] = 0.0
-                            continue
-                        elif state[2][robot.id()] == 1 and statePrime[2][robot.id()] == 0:
-                            if task in statePrime[1]: T[s][a][sp] *= robot.get_break_probability(task[2],task[3])
-                            else: T[s][a][sp] = 0.0 
+                    #If the action set is empty or there are no tasks then only one transition is possible.
+                    if len(action) == 0 or len(state[1]) == 0:
+                        if statePrime[1] == state[1] and statePrime[2] == state[2]:
+                            T[s][a][sp] = 1.0
+                            break
                         else:
-                            if task not in statePrime[1]: T[s][a][sp] *= (1.0 - robot.get_break_probability(task[2],task[3]))
-                            else: T[s][a][sp] = 0.0
+                            continue
 
+                    #Second check that state's tasks contains all tasks in statePrime U action.tasks
+                    if not state[1].issuperset(statePrime[1].union(tasks)):
+                        T[s][a][sp] = 0.0
+                        continue
+
+                    #Next make sure that we don't drop any tasks from the state.
+                    if len(statePrime[1].union(tasks)) < len(state[1]):
+                        T[s][a][sp] = 0.0
+                        continue
+
+                    for (task,robot) in action:
+                        #Make sure a broken robot is not completing a task 
+                        if state[2][robot.get_id()] == 0 and task not in statePrime[1]:
+                            T[s][a][sp] = 0.0
+                            break
+                        #If robot breaks
+                        if state[2][robot.get_id()] == 1 and statePrime[2][robot.get_id()] == 0:
+                            if task in state[1] and task in statePrime[1]: #And the task was not erroneously completed
+                                if T[s][a][sp] == 0:
+                                    T[s][a][sp] = robot.get_break_probability(task[2],task[3])
+                                else:
+                                    T[s][a][sp] = T[s][a][sp]*robot.get_break_probability(task[2],task[3])
+                            else: 
+                                T[s][a][sp] = 0.0
+                                break
+                        #If robot doesn't break
+                        if state[2][robot.get_id()] == 1 and statePrime[2][robot.get_id()] == 1:
+                            if task in state[1] and task not in statePrime[1]: #And task was completed
+                                if T[s][a][sp] == 0:
+                                    T[s][a][sp] = (1-robot.get_break_probability(task[2],task[3]))
+                                else:
+                                    T[s][a][sp] = T[s][a][sp]*(1-robot.get_break_probability(task[2],task[3]))
+                            else:
+                                T[s][a][sp] = 0.0
+                                break
+
+                    #Basically make sure that the robot status list is consistent
+                    for i in range(len(state[2])):
+                        if state[2][i] == 0 and statePrime[2][i] == 1:
+                            T[s][a][sp] = 0.0
+                        if state[2][i] == 1 and statePrime[2][i] == 0:
+                            r_check = False
+                            for (task,robot) in action:
+                                if robot.get_id() == i: r_check = True
+                            if not r_check: T[s][a][sp] = 0.0
+
+                if np.sum(T[s][a]) == 0.0:
+                    for sp,statePrime in enumerate(self.states):
+                        if statePrime[0] == (state[0]+1) and len(statePrime[1]) == 0 and statePrime[2] == state[2]:
+                            T[s][a][sp] = 1.0
+                            break
                 # TODO: Check if T sums to 1.
-                check = 0.0
-                for sp, statePrime in enumerate(self.states):
-                   check += T[s][a][sp]
-                print(check)
-
+                # check = 0.0
+                # for sp, statePrime in enumerate(self.states):
+                #     check += T[s][a][sp]
+                #     if T[s][a][sp] != 0.0: print(statePrime)
+                # print(check)
+                # if round(check,3) != 1.0:
+                #     print(state)
+                #     print(tasks)
+                #     print([r.get_id() for r in robots])
+                #     #print(T[s][a])
+                #     quit()
         return S, T
 
     def _compute_rewards(self):
@@ -201,12 +246,14 @@ class RTAMDP(object):
 
         for s, state in enumerate(self.states):
             for a, action in enumerate(self.actions):
-                for sp, statePrime in enumerate(self.states):                
-                    for (task,robot) in zip(action):
+                for sp, statePrime in enumerate(self.states):
+                    for task in statePrime[1]:
+                        R[s][a][sp] -= self.delta
+                    for (task,robot) in action:
                         if task in statePrime[1]:
-                            R[s][a][sp] -= self.delta
-                            if state[2][robot.id()] == 0 and statePrime[2][robot.id()] > 0:
-                                R[s][a][sp] -= robot.get_break_cost(statePrime[2][robot.id()])
+                            if state[2][robot.get_id()] == 1 and statePrime[2][robot.get_id()] == 0:
+                                #R[s][a][sp] -= robot.get_break_cost(statePrime[2][robot.get_id()])
+                                R[s][a][sp] -= 100
                         else:
                             R[s][a][sp] -= robot.calculate_time(task[2],task[3])
         return R
@@ -214,17 +261,17 @@ class RTAMDP(object):
     def initialize(self):
         """ Initialize the nova MDP using the map from 'snap' Cartographer. """
 
-        self.states = _compute_states(self)
-        self.actions = _compute_actions(self)
+        self.states = self._compute_states()
+        self.actions = self._compute_actions()
 
         self.mdp = MDP()
         self.mdp.n = int(len(self.states))
         self.mdp.ns = int(len(self.states))
         self.mdp.m = int(len(self.actions))
-        self.mdp.gamma = float(0.99)
+        self.mdp.gamma = float(1.0)
         self.mdp.horizon = int(self.H)
         self.mdp.epsilon = float(0.001)
-        self.mdp.s0 = int(0)
+        self.mdp.s0 = int(len(self.states)/self.H)-1
         self.mdp.ng = int(0)
 
         S, T = self._compute_state_transitions()
@@ -234,26 +281,26 @@ class RTAMDP(object):
         self.mdp.T = array_type_nmns_float(*np.array(T).flatten())
 
         R = self._compute_rewards()
-        array_type_nm_float = ct.c_float * (self.mdp.n * self.mdp.m)
-        self.mdp.R = array_type_nm_float(*np.array(R).flatten())
+        #array_type_nms_float = ct.c_float * (self.mdp.n * self.mdp.m * self.mdp.ns)
+        self.mdp.R = array_type_nmns_float(*np.array(R).flatten())
         self.mdp.Rmax = float(np.array(R).max())
         self.mdp.Rmin = float(np.array(R).min())
 
     def solve(self):
         """ Use the nova MDP to compute the policy. """
 
-        rospy.loginfo("Info[TaskMDP.solve]: Solving the TaskMDP...")
+        #rospy.loginfo("Info[TaskMDP.solve]: Solving the TaskMDP...")
 
-        algorithm = MDPVI(self.mdp)
+        algorithm = MDPValueIterationCPU(self.mdp)
 
         timing = time.time()
         self.policy = algorithm.solve()
         timing = time.time() - timing
-
+        #print(timing)
         print(self.mdp)
         print(self.policy)
 
-        rospy.loginfo("Info[TaskMDP.solve]: Completed in %.3f seconds!" % (timing))
+        #rospy.loginfo("Info[TaskMDP.solve]: Completed in %.3f seconds!" % (timing))
 
     def save_policy(self, filename="task_mdp.policy"):
         """ Save the stored policy to a file.
@@ -331,8 +378,8 @@ def main():
           (3,4,3,2) ]
     R = [Robot.robot(0,0,0), Robot.robot(1,1,3), Robot.robot(2,2,2)]
 
-    rta = RTA(T,R)
-    rta.initalize()
+    rta = RTAMDP(T,R)
+    rta.initialize()
     rta.solve()
 
 main()
