@@ -55,7 +55,7 @@ class RouteMDP(object):
     def __init__(self):
         """ The constructor for the RouteMDP object. """
 
-        self.map = campus_map.generate_map()  #The map of campus as a graph
+        self.map = campus_map.generate_map()  #The map of campus as a dictionary
         self.failed_transitions = [0, 1, 2, 3, 4, 5]
         self.obstacles = [True, False]
         # self.door = [True, False] #The the presence of door
@@ -94,8 +94,9 @@ class RouteMDP(object):
                 s in S := ([campus_map], [failed_transitions], [obstacles])
         """
 
+        # using nodes of map graph in map.values()
         S = list(
-            it.product(self.map, self.failed_transitions, self.obstacles)
+            it.product(self.map.values(), self.failed_transitions, self.obstacles)
             )
 
         # need to prune states if door and crosswalk are added to states
