@@ -57,7 +57,7 @@ class RouteMDP(object):
 
         self.map = campus_map.generate_map()  #The map of campus as a dictionary
         self.failed_transitions = [0, 1, 2, 3, 4, 5]
-        self.obstacles = [True, False]
+        # self.obstacles = [True, False]
         # self.door = [True, False] #The the presence of door
         # self.crosswalk = ['left', 'right', 'both', 'neither'] #Cars on the road
 
@@ -96,7 +96,7 @@ class RouteMDP(object):
 
         # using nodes of map graph in map.values()
         S = list(
-            it.product(self.map.values(), self.failed_transitions, self.obstacles)
+            it.product(self.map.values(), self.failed_transitions)
             )
 
         # need to prune states if door and crosswalk are added to states
@@ -111,7 +111,7 @@ class RouteMDP(object):
 
         '''
         actions include:
-            stay -- staying in current state
+            observe -- staying in current state to observe
             move -- moving to next state
             call -- calling for human help
 
@@ -120,27 +120,12 @@ class RouteMDP(object):
 
         '''
 
-        A = list(power_set(list(it.product(self.T,self.R))))
-        A = [a for a in A if len(a) <= len(self.tasks)]
+        A = self.map.values()
+        A += ["call"]
 
-        new_A = []
-        for a in A:
-            t_check = [0 for t in self.Tasks]
-            r_check = [0 for r in self.Robots]
-            check = True
-            for (t,r) in p:
-                if t_check[t] == 1:
-                    check = False
-                    break
-                elif r_check[r] == 1:
-                    check = False
-                    break
-                else:
-                    t_check[t] = 1
-                    r_check[r] = 1
-            if check is True: new_A.append(a)
+        # add observe later
 
-        return new_A
+        return A
 
     def _compute_state_transitions(self):
         """ Compute the state transitions for the RouteMDP.
@@ -160,21 +145,6 @@ class RouteMDP(object):
                 for sp, statePrime in enumerate(self.states):
                     S[s][a][sp] = sp
                     T[s][a][sp] = 1.0
-
-                    '''
-                        if failed_transitions == 5:
-                            stay = 0.0
-                            move = 0.0
-                            call = 1.0
-                        elif obstacle == true:
-                            stay = 1.0
-                            move = 0.0
-                            call = 0.0
-                        else
-                            stay = 1.0
-                            move = 0.0
-                            call = 0.0
-                    '''
 
                     # the line below can be deleted, since transitions are initalized to 1.0
                     if state[1] == self.failed_transitions[-1] and action is "call":
