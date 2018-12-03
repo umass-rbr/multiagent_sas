@@ -115,13 +115,12 @@ class RouteMDP(object):
             move -- moving to next state
             call -- calling for human help
 
-        moving is based on map vertices
         if failed_transition = 5 then call for human help
 
         '''
 
         A = self.map.values()
-        A += ["call"]
+        A += ["observe", "call"]
 
         # add observe later
 
@@ -146,20 +145,20 @@ class RouteMDP(object):
                     S[s][a][sp] = sp
                     T[s][a][sp] = 1.0
 
-                    # the line below can be deleted, since transitions are initalized to 1.0
-                    if state[1] == self.failed_transitions[-1] and action is "call":
-                        T[s][a][sp] = 1.0
-                    elif state[1] == self.failed_transitions[-1] and action is not "call":
-                        T[s][a][sp] = 0.0
-                    # the line below can be deleted
-                    elif state[2] is True and action is "stay":
-                        T[s][a][sp] = 1.0
-                    elif state[2] is True and action is not "stay":
-                        T[s][a][sp] = 0.0
-                    # anything else is a move action
-                    else:
-                        if action is not "move":
-                            T[s][a][sp] = 0.0
+                    # # the line below can be deleted, since transitions are initalized to 1.0
+                    # if state[1] == self.failed_transitions[-1] and action is "call":
+                    #     T[s][a][sp] = 1.0
+                    # elif state[1] == self.failed_transitions[-1] and action is not "call":
+                    #     T[s][a][sp] = 0.0
+                    # # the line below can be deleted
+                    # elif state[2] is True and action is "stay":
+                    #     T[s][a][sp] = 1.0
+                    # elif state[2] is True and action is not "stay":
+                    #     T[s][a][sp] = 0.0
+                    # # anything else is a move action
+                    # else:
+                    #     if action is not "move":
+                    #         T[s][a][sp] = 0.0
                             
                 # # TODO: Check if T sums to 1.
                 # check = 0.0
@@ -182,10 +181,8 @@ class RouteMDP(object):
 
         for s, state in enumerate(self.states):
             for a, action in enumerate(self.actions):
-                for importance, issue in enumerate(self.issues):
-                    if issue in state:
-                        R[s][a] -= float(importance + 1)
-
+                # temporary reward function
+                R[s][a] -= .04
         return R
 
     def initialize(self):

@@ -5,7 +5,7 @@ def generate_map():
         keys represent nodes on directed graph to other connected nodes
         values represent list of destination nodes and the cost for travel 
         items in value are -- (destination, cost, obstacle)
-        cost: 2 downhill, 4 level, 6 uphill
+        cost: 2 downhill, 4 level, 6 uphill, 10 stay 
     '''
     
     campus_map[1] = [
