@@ -33,7 +33,7 @@ from nova.mdp_value_function import MDPValueFunction
 
 import campus_map
 
-import rospy
+# import rospy
 
 import itertools as it
 import ctypes as ct
@@ -119,8 +119,8 @@ class RouteMDP(object):
 
         '''
 
-        A = self.map.values()
-        A += ["observe", "call"]
+        A = list(self.map.values())
+        A.append("call")
 
         # add observe later
 
@@ -216,7 +216,7 @@ class RouteMDP(object):
     def solve(self):
         """ Use the nova MDP to compute the policy. """
 
-        rospy.loginfo("Info[RouteMDP.solve]: Solving the RouteMDP...")
+        # rospy.loginfo("Info[RouteMDP.solve]: Solving the RouteMDP...")
 
         algorithm = MDPVI(self.mdp)
 
@@ -227,7 +227,7 @@ class RouteMDP(object):
         print(self.mdp)
         print(self.policy)
 
-        rospy.loginfo("Info[RouteMDP.solve]: Completed in %.3f seconds!" % (timing))
+        # rospy.loginfo("Info[RouteMDP.solve]: Completed in %.3f seconds!" % (timing))
 
     def save_policy(self, filename="route_mdp.policy"):
         """ Save the stored policy to a file.
@@ -237,10 +237,10 @@ class RouteMDP(object):
         """
 
         if self.policy is None:
-            rospy.logerror("Error[RouteMDP.save_policy]: Policy is not yet defined.")
+            #rospy.logerror("Error[RouteMDP.save_policy]: Policy is not yet defined.")
             raise Exception()
 
-        rospy.loginfo("Info[RouteMDP.save_policy]: Saving the RouteMDP policy.")
+        #rospy.loginfo("Info[RouteMDP.save_policy]: Saving the RouteMDP policy.")
 
         absoluteName = os.path.join(thisFilePath, filename)
         self.policy.save(absoluteName)
@@ -252,7 +252,7 @@ class RouteMDP(object):
                 filename    --  Optionally, a custom name of the file to load.
         """
 
-        rospy.loginfo("Info[RouteMDP.load_policy]: Loading the RouteMDP policy.")
+        #rospy.loginfo("Info[RouteMDP.load_policy]: Loading the RouteMDP policy.")
 
         absoluteName = os.path.join(thisFilePath, filename)
         self.policy = MDPValueFunction()
