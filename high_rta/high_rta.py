@@ -30,7 +30,7 @@ thisFilePath = os.path.dirname(os.path.realpath(__file__))
 
 sys.path.append(os.path.join(thisFilePath, "..", "..", "nova", "python"))
 from nova.mdp import MDP
-from nova.mdp_vi import MDPValueIterationCPU
+from nova.mdp_vi import MDPVI
 from nova.mdp_value_function import MDPValueFunction
 
 #import rospy
@@ -52,7 +52,7 @@ def power_set(iterable):
 class RTAMDP(object):
     """ The high-level task MDP that decides which tasks to complete. """
 
-    def __init__(self,tasks,robots,H=4,delta=0.5):
+    def __init__(self,tasks,robots,H=4,delta=30):
         """ The constructor for the TaskMDP object. """
 
         self.tasks = tasks #Tasks are tuples: <start_time, end_time, pickup, dropoff>
@@ -223,7 +223,6 @@ class RTAMDP(object):
                 # check = 0.0
                 # for sp, statePrime in enumerate(self.states):
                 #     check += T[s][a][sp]
-                #     if T[s][a][sp] != 0.0: print(statePrime)
                 # print(check)
                 # if round(check,3) != 1.0:
                 #     print(state)
@@ -260,10 +259,9 @@ class RTAMDP(object):
 
     def initialize(self):
         """ Initialize the nova MDP using the map from 'snap' Cartographer. """
-
         self.states = self._compute_states()
         self.actions = self._compute_actions()
-
+        
         self.mdp = MDP()
         self.mdp.n = int(len(self.states))
         self.mdp.ns = int(len(self.states))
@@ -291,7 +289,7 @@ class RTAMDP(object):
 
         #rospy.loginfo("Info[TaskMDP.solve]: Solving the TaskMDP...")
 
-        algorithm = MDPValueIterationCPU(self.mdp)
+        algorithm = MDPVI(self.mdp)
 
         timing = time.time()
         self.policy = algorithm.solve()
@@ -377,7 +375,6 @@ def main():
           (3,4,2,1),
           (3,4,3,2) ]
     R = [Robot.robot(0,0,0), Robot.robot(1,1,3), Robot.robot(2,2,2)]
-
     rta = RTAMDP(T,R)
     rta.initialize()
     rta.solve()
