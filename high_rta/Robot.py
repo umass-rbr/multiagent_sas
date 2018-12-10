@@ -10,6 +10,7 @@ class robot():
 		self.pos = pos
 
 	def get_break_probability(self, l1, l2):
+		return 0 
 		if self.r_type == 0: #Inside Robot
 			if campus_map.get_building(l1) != campus_map.get_building(l2):
 				return .2
@@ -19,7 +20,7 @@ class robot():
 				return .05
 			else: return .2
 		else: #Human
-			return 0
+			return 0.0
 
 	def calculate_time(self, l1, l2):
 		if self.r_type == 0: #Inside robot

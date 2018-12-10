@@ -95,7 +95,7 @@ class RTAMDP(object):
         """
 
         #matchings = list(it.product(self.tasks,self.robots))
-        times = [i for i in range(self.H)]
+        times = [i for i in range(self.H + 1)]
         robot_list = [list(r) for r in list(it.product([0,1],repeat=len(self.robots)-1))]
         for r in robot_list: r.append(1)
         S = list(it.product(times,list(power_set(self.tasks)),robot_list))
@@ -112,6 +112,9 @@ class RTAMDP(object):
 
         new_A = []
         for a in A:
+            #print(a)
+            #print("\n")
+            #quit()
             t_check = [0 for t in self.tasks]
             r_check = [0 for r in self.robots]
             check = True
@@ -143,93 +146,102 @@ class RTAMDP(object):
         T = [[[float(0.0) for sp in range(self.mdp.ns)] for a in range(self.mdp.m)] for s in range(self.mdp.n)]
 
         for s, state in enumerate(self.states):
-            if state[0] == self.H -1:
-                T[s][a][s] = 1.0
-                continue
+
             for a, action in enumerate(self.actions):
+
+                if state[0] == self.H:
+                    T[s][a][s] == 1.0
+                    break
+
                 tasks = []
-                #robots = []
+                robots = []
+                invalid = False
                 for (task,robot) in action:
+                    # if task[0] > state[0]:
+                    #     invalid = True
+                    #     break
                     tasks.append(task)
-                    #robots.append(robot)
+                    robots.append(robot)
+
                 for sp, statePrime in enumerate(self.states):
                     S[s][a][sp] = sp
 
-                    #Can only go to states at next time step.
-                    if statePrime[0] != state[0] + 1:
-                        T[s][a][sp] = 0.0
-                        continue
+                    if statePrime[0] == state[0] + 1:
 
-                    #If the action set is empty or there are no tasks then only one transition is possible.
-                    if len(action) == 0 or len(state[1]) == 0:
-                        if statePrime[1] == state[1] and statePrime[2] == state[2]:
-                            T[s][a][sp] = 1.0
-                            break
-                        else:
-                            continue
-
-                    #Second check that state's tasks contains all tasks in statePrime U action.tasks
-                    if not state[1].issuperset(statePrime[1].union(tasks)):
-                        T[s][a][sp] = 0.0
-                        continue
-
-                    #Next make sure that we don't drop any tasks from the state.
-                    if len(statePrime[1].union(tasks)) < len(state[1]):
-                        T[s][a][sp] = 0.0
-                        continue
-
-                    for (task,robot) in action:
-                        #Make sure a broken robot is not completing a task 
-                        if state[2][robot.get_id()] == 0 and task not in statePrime[1]:
-                            T[s][a][sp] = 0.0
-                            break
-                        #If robot breaks
-                        if state[2][robot.get_id()] == 1 and statePrime[2][robot.get_id()] == 0:
-                            if task in state[1] and task in statePrime[1]: #And the task was not erroneously completed
-                                if T[s][a][sp] == 0:
-                                    T[s][a][sp] = robot.get_break_probability(task[2],task[3])
-                                else:
-                                    T[s][a][sp] = T[s][a][sp]*robot.get_break_probability(task[2],task[3])
-                            else: 
-                                T[s][a][sp] = 0.0
+                        #If the action set is empty or there are no tasks then only one transition is possible.
+                        if len(action) == 0 or len(state[1]) == 0:
+                            if statePrime[1] == state[1] and statePrime[2] == state[2]:
+                                T[s][a][sp] = 1.0
                                 break
-                        #If robot doesn't break
-                        if state[2][robot.get_id()] == 1 and statePrime[2][robot.get_id()] == 1:
-                            if task in state[1] and task not in statePrime[1]: #And task was completed
-                                if T[s][a][sp] == 0:
-                                    T[s][a][sp] = (1-robot.get_break_probability(task[2],task[3]))
-                                else:
-                                    T[s][a][sp] = T[s][a][sp]*(1-robot.get_break_probability(task[2],task[3]))
                             else:
-                                T[s][a][sp] = 0.0
-                                break
+                                continue
 
-                    #Basically make sure that the robot status list is consistent
-                    for i in range(len(state[2])):
-                        if state[2][i] == 0 and statePrime[2][i] == 1:
-                            T[s][a][sp] = 0.0
-                        if state[2][i] == 1 and statePrime[2][i] == 0:
-                            r_check = False
+                        if state[1] == statePrime[1].union(tasks):
                             for (task,robot) in action:
-                                if robot.get_id() == i: r_check = True
-                            if not r_check: T[s][a][sp] = 0.0
+                                #Make sure a broken robot is not assigned a task
+                                if state[2][robot.get_id()] == 0:
+                                    T[s][a][sp] = 0.0
+                                    break
+                                #Make sure not assigned completed tasks
+                                if task not in state[1]:
+                                    T[s][a][sp] = 0.0
+                                    break
+                                #Only assign possible tasks
+                                if task[0] > state[0] or task[1] < statePrime[0]:
+                                    T[s][a][sp] = 0.0
+                                    break
+                                #If robot breaks
+                                if state[2][robot.get_id()] == 1 and statePrime[2][robot.get_id()] == 0:
+                                    T[s][a][sp] = 0.0
+                                    break
+                                    if task in state[1] and task in statePrime[1]: #And the task was not erroneously completed
+                                        if T[s][a][sp] == 0:
+                                            T[s][a][sp] = robot.get_break_probability(task[2],task[3])
+                                        else:
+                                            T[s][a][sp] = T[s][a][sp]*robot.get_break_probability(task[2],task[3])
+                                    else: 
+                                        T[s][a][sp] = 0.0
+                                        break
+                                #If robot doesn't break
+                                if state[2][robot.get_id()] == 1 and statePrime[2][robot.get_id()] == 1:
+                                    if task in state[1] and task not in statePrime[1]: #And task was completed
+                                        if T[s][a][sp] == 0.0:
+                                            T[s][a][sp] = (1-robot.get_break_probability(task[2],task[3]))
+                                        else:
+                                            T[s][a][sp] = T[s][a][sp]*(1-robot.get_break_probability(task[2],task[3]))
+                                    else:
+                                        T[s][a][sp] = 0.0
+                                        break
 
+                            #Basically make sure that the robot status list is consistent
+                            for i in range(len(state[2])):
+                                if state[2][i] == 0 and statePrime[2][i] == 1: #Make sure no broken robot is suddenly set to working
+                                    T[s][a][sp] = 0.0
+                                if state[2][i] == 1 and statePrime[2][i] == 0: #Make sure that if a robot breaks it is in action
+                                    r_check = False
+                                    for (task,robot) in action:
+                                        if robot.get_id() == i: r_check = True
+                                    if not r_check: T[s][a][sp] = 0.0
+
+                #When T[s][a] is zero everywhere make it go w.p. 1 to same state with time = time + 1
                 if np.sum(T[s][a]) == 0.0:
                     for sp,statePrime in enumerate(self.states):
-                        if statePrime[0] == (state[0]+1) and len(statePrime[1]) == 0 and statePrime[2] == state[2]:
+                        if statePrime[0] == (state[0]+1) and statePrime[1] == state[1] and statePrime[2] == state[2]:
                             T[s][a][sp] = 1.0
                             break
+
                 # TODO: Check if T sums to 1.
-                # check = 0.0
-                # for sp, statePrime in enumerate(self.states):
-                #     check += T[s][a][sp]
+                check = 0.0
+                for sp, statePrime in enumerate(self.states):
+                    check += T[s][a][sp]
                 # print(check)
-                # if round(check,3) != 1.0:
-                #     print(state)
-                #     print(tasks)
-                #     print([r.get_id() for r in robots])
-                #     #print(T[s][a])
-                #     quit()
+                if round(check,3) != 1.0:
+                    print(check)
+                    print(state)
+                    print(tasks)
+                    print([r.get_id() for r in robots])
+                    #print(T[s][a])
+                    quit()
         return S, T
 
     def _compute_rewards(self):
@@ -238,27 +250,18 @@ class RTAMDP(object):
             This assumes states, actions, n, and m are set.
 
             Returns:
-                R   --  The n-m-ns lists of rewards.
+                R   --  The n-m lists of rewards.
         """
 
-        R = [[[0.0 for sp in range(self.mdp.n)] for a in range(self.mdp.m)] for s in range(self.mdp.n)]
+        R = [[0.0 for a in range(self.mdp.m)] for s in range(self.mdp.n)]
 
         for s, state in enumerate(self.states):
             for a, action in enumerate(self.actions):
-                for sp, statePrime in enumerate(self.states):
-                    #Can only go to states at next time step. Trying to cut down on compilation time. 
-                    if statePrime[0] != state[0] + 1:
-                        R[s][a][sp] = 0.0
-                        continue
-                    for task in statePrime[1]:
-                        R[s][a][sp] -= self.delta
-                    for (task,robot) in action:
-                        if task in statePrime[1]:
-                            if state[2][robot.get_id()] == 1 and statePrime[2][robot.get_id()] == 0:
-                                #R[s][a][sp] -= robot.get_break_cost(statePrime[2][robot.get_id()])
-                                R[s][a][sp] -= 100
-                        else:
-                            R[s][a][sp] -= robot.calculate_time(task[2],task[3])
+                for task in state[1]:
+                    if task[0] <= state[0]:
+                        R[s][a] -= self.delta*(state[0] - task[0])
+                for (task,robot) in action:
+                    R[s][a] -= robot.calculate_time(task[2],task[3])
         return R
 
     def initialize(self):
@@ -273,20 +276,22 @@ class RTAMDP(object):
         self.mdp.gamma = float(0.99)
         self.mdp.horizon = int(self.H)
         self.mdp.epsilon = float(0.001)
-        self.mdp.s0 = int(len(self.states)/self.H)-1
+        self.mdp.s0 = int(self.mdp.n/(self.H+1)-1)
         self.mdp.ng = int(0)
 
-        S, T = self._compute_state_transitions()
+        S, self.T = self._compute_state_transitions()
+        #print("Checking T at init\n" + str(T[self.mdp.s0]))
+        #quit()
         array_type_nmns_int = ct.c_int * (self.mdp.n * self.mdp.m * self.mdp.ns)
         array_type_nmns_float = ct.c_float * (self.mdp.n * self.mdp.m * self.mdp.ns)
         self.mdp.S = array_type_nmns_int(*np.array(S).flatten())
-        self.mdp.T = array_type_nmns_float(*np.array(T).flatten())
+        self.mdp.T = array_type_nmns_float(*np.array(self.T).flatten())
 
-        R = self._compute_rewards()
-        #array_type_nms_float = ct.c_float * (self.mdp.n * self.mdp.m * self.mdp.ns)
-        self.mdp.R = array_type_nmns_float(*np.array(R).flatten())
-        self.mdp.Rmax = float(np.array(R).max())
-        self.mdp.Rmin = float(np.array(R).min())
+        self.R = self._compute_rewards()
+        array_type_nm_float = ct.c_float * (self.mdp.n * self.mdp.m)
+        self.mdp.R = array_type_nm_float(*np.array(self.R).flatten())
+        self.mdp.Rmax = float(np.array(self.R).max())
+        self.mdp.Rmin = float(np.array(self.R).min())
 
     def solve(self):
         """ Use the nova MDP to compute the policy. """
@@ -367,9 +372,10 @@ class RTAMDP(object):
         rand = np.random.uniform()
         thresh = 0
         for sp in range(self.mdp.n):
-            thresh += T[s][a][sp]
+            thresh += self.mdp.T[self.currentState * (self.mdp.m* self.mdp.ns) + action * (self.mdp.ns) + sp]
             if rand <= thresh:
-               self.execute_update_state(sp)
+                self.currentState = sp
+                break
         return
 
     def execute_update_state(self, successor):
@@ -387,30 +393,48 @@ class RTAMDP(object):
             Parameters:
 
             Returns:
-                The reward/cost of a stochastic simulation following the optimal policy.
+                The final state when the horizon is reached and the reward/cost of a stochastic simulation following the optimal policy.
         """
         reward = 0
         self.execute_reset()
-        while currentState[0] <= self.mdp.horizon:
+        while self.execute_get_state()[0] < self.mdp.horizon :
             s = self.currentState
             a = self.policy.action(self.currentState)
             self.execute_take_action(a)
-            reward += R[s][a][currentState]
+            reward += self.mdp.R[s * (self.mdp.m) + a]
+
+            a_out = ''
+            for (task,robot) in self.actions[a]:
+                a_out += "[ " + str(task) + " , " + str(robot.get_id()) + " ], "
+
+            print("*******\n" + 
+                  "s: " + str(s) + " | " + str(self.states[s]) + "\n" + 
+                  "a: " + str(a) + " | " + a_out + "\n" +
+                  "sp: " + str(self.currentState) + " | " + str(self.execute_get_state()) + "\n" +
+                  "T[s][a][sp]: " + str(self.T[s][a][self.currentState]) + "\n" +
+                  "Reward: " + str(reward) + "\n" +
+                  "*******\n")
+
+            if s == self.currentState or len(self.execute_get_state()[1]) == 0: break
 
         return (self.currentState, reward)
 
 def main():
-    T = [ (0,3,0,1),
+    T = [ (0,3,2,1),
           (0,2,1,0),
           (1,4,1,2),
-          (3,4,2,1),
-          (3,4,3,2) ]
+          (2,3,2,3)]
     R = [Robot.robot(0,0,0), Robot.robot(1,1,3), Robot.robot(2,2,2)]
     rta = RTAMDP(T,R)
+    print("------------------------Beginning MDP initialization.....")
     rta.initialize()
+    print("Initial State: " + str(rta.states[rta.mdp.s0]))
     rta.solve()
-    (s,r) = self.simulate()
+    print("------------------------Beginning simulation trace....")
+    (s,r) = rta.simulate()
+    print("------------------------Ending simulation trace....")
 
-    print(str(s) + " | " + str(r))
+    #print('Expected Reward from Init: ' + str(rta.))
+    print(str(rta.states[s]) + " | " + str(r))
 
 main()
