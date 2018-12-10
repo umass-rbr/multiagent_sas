@@ -246,6 +246,10 @@ class RTAMDP(object):
         for s, state in enumerate(self.states):
             for a, action in enumerate(self.actions):
                 for sp, statePrime in enumerate(self.states):
+                    #Can only go to states at next time step. Trying to cut down on compilation time. 
+                    if statePrime[0] != state[0] + 1:
+                        R[s][a][sp] = 0.0
+                        continue
                     for task in statePrime[1]:
                         R[s][a][sp] -= self.delta
                     for (task,robot) in action:
@@ -336,7 +340,7 @@ class RTAMDP(object):
         #self.currentState = rnd.randint(1, len(self.states) - 1)
 
         # Always initalize to the active tasks: Clean and Medicate.
-        self.currentState = self.states.index({"Clean", "Medicate"})
+        self.currentState = self.mdp.s0
 
     def execute_get_state(self):
         """ During execution, get the current state.
@@ -359,6 +363,15 @@ class RTAMDP(object):
 
         return action
 
+    def execute_take_action(self,action):
+        rand = np.random.uniform()
+        thresh = 0
+        for sp in range(self.mdp.n):
+            thresh += T[s][a][sp]
+            if rand <= thresh:
+               self.execute_update_state(sp)
+        return
+
     def execute_update_state(self, successor):
         """ During execution, update the current state, but here we are removing (and adding) issues.
 
@@ -367,6 +380,24 @@ class RTAMDP(object):
         """
 
         self.currentState = self.states.index(successor)
+
+    def simulate(self):
+        """ Simulate a trial starting at initial state.
+
+            Parameters:
+
+            Returns:
+                The reward/cost of a stochastic simulation following the optimal policy.
+        """
+        reward = 0
+        self.execute_reset()
+        while currentState[0] <= self.mdp.horizon:
+            s = self.currentState
+            a = self.policy.action(self.currentState)
+            self.execute_take_action(a)
+            reward += R[s][a][currentState]
+
+        return (self.currentState, reward)
 
 def main():
     T = [ (0,3,0,1),
@@ -378,5 +409,8 @@ def main():
     rta = RTAMDP(T,R)
     rta.initialize()
     rta.solve()
+    (s,r) = self.simulate()
+
+    print(str(s) + " | " + str(r))
 
 main()
