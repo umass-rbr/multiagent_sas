@@ -52,14 +52,14 @@ def power_set(iterable):
 class RouteMDP(object):
     """ The high-level route MDP that decides path for delivery. """
 
-    def __init__(self):
+    def __init__(self, goalNode):
         """ The constructor for the RouteMDP object. """
 
+        self.goalNode = goalNode
         self.map = campus_map.generate_map()  #The map of campus as a dictionary
-        self.failed_transitions = [0, 1, 2, 3, 4, 5]
-        # self.obstacles = [True, False]
-        # self.door = [True, False] #The the presence of door
-        # self.crosswalk = ['left', 'right', 'both', 'neither'] #Cars on the road
+        # self.failedTransitions = [0, 1, 2, 3, 4, 5]
+        self.obstacles = ["none", "crosswalk"]
+        # self.teleoperation = [True, False]
 
         self.mdp = None
         self.policy = None
@@ -91,15 +91,18 @@ class RouteMDP(object):
         """ Compute the set of states from the state factores for the RouteMDP.
             Returns:
                 S -- the set of states.
-                s in S := ([campus_map], [failed_transitions], [obstacles])
+                s in S := ([campus_map], [failed_transitions], [obstacles], [teleoperation])
         """
 
-        # using nodes of map graph in map.values()
+        # using nodes of map graph in map.keys()
         S = list(
-            it.product(self.map.values(), self.failed_transitions)
+	            it.product(
+	            	list(self.map.keys()),
+	            	# self.failedTransitions,
+	            	self.obstacles
+	            	# self.teleoperation
+        		)
             )
-
-        # need to prune states if door and crosswalk are added to states
 
         return S
 
@@ -119,10 +122,8 @@ class RouteMDP(object):
 
         '''
 
-        A = list(self.map.values())
+        A = list(self.map.keys())
         A.append("call")
-
-        # add observe later
 
         return A
 
@@ -143,28 +144,48 @@ class RouteMDP(object):
             for a, action in enumerate(self.actions):
                 for sp, statePrime in enumerate(self.states):
                     S[s][a][sp] = sp
-                    T[s][a][sp] = 1.0
+                    T[s][a][sp] = 0.0
 
-                    # # the line below can be deleted, since transitions are initalized to 1.0
+                    # # first check for when failedTransitions is at max
                     # if state[1] == self.failed_transitions[-1] and action is "call":
-                    #     T[s][a][sp] = 1.0
-                    # elif state[1] == self.failed_transitions[-1] and action is not "call":
-                    #     T[s][a][sp] = 0.0
-                    # # the line below can be deleted
-                    # elif state[2] is True and action is "stay":
-                    #     T[s][a][sp] = 1.0
-                    # elif state[2] is True and action is not "stay":
-                    #     T[s][a][sp] = 0.0
-                    # # anything else is a move action
-                    # else:
-                    #     if action is not "move":
-                    #         T[s][a][sp] = 0.0
-                            
-                # # TODO: Check if T sums to 1.
-                # check = 0.0
-                # for sp, statePrime in enumerate(self.states):
-                #    check += T[s][a][sp]
-                # print(check)
+                    # 	# go to any state that has teleoperation = True
+
+                    # check for goal node
+                    if state[0] == self.goalNode and action == self.goalNode and state[1] is "none":
+                        # can only transition to itself
+                        if statePrime[0] == self.goalNode and statePrime[1] is "none":
+                            T[s][a][sp] = 1.0
+                    # going from crosswalk state to goal node
+                    elif state[0] == 4 and action == self.goalNode and state[1] is "crosswalk":
+                        # moves from crosswalk to goal node
+                        if statePrime[0] == self.goalNode and statePrime[1] is "none":
+                                T[s][a][sp] = 1.0
+                    # going from crosswalk node to crosswalk state
+                    elif state[0] == 4 and action == "call" and state[1] is not "crosswalk":
+                        # transitions to crosswalk state with same graph node
+                        if statePrime[0] == 4 and statePrime[1] is "crosswalk":
+                            T[s][a][sp] = 1.0
+                    # going around the map on nodes
+                    elif state[0] != 4 and state[0] != self.goalNode and action != self.goalNode and state[1] is "none":
+                        # calculate valid moves on the map
+                        validMoves = self.map[state[0]]
+                        for destination in validMoves:
+                            if action == destination[0] and statePrime[1] is "none" and statePrime[0] == destination[0]:
+                                T[s][a][sp] = 1/len(validMoves)
+                    # # check for action call
+                    # elif action is "call":
+                    # 	# for now, you just get approved to move. duplicated code.
+                    # 	nextNode = statePrime[0]
+                    # 	for destination in validMoves:
+                    # 		if destination is nextNode:
+                    # 			T[s][a][sp] = 1.0
+                    # check for valid moves on the map
+
+                # TODO: Check if T sums to 1.
+                check = 0.0
+                for sp, statePrime in enumerate(self.states):
+                   check += T[s][a][sp]
+                print("State:", state, " ***** Action:", action, " ***** Check:", check)
 
         return S, T
 
@@ -181,8 +202,23 @@ class RouteMDP(object):
 
         for s, state in enumerate(self.states):
             for a, action in enumerate(self.actions):
-                # temporary reward function
-                R[s][a] -= .04
+				                
+                # goal node stays in its own state
+                if state[0] == self.goalNode and action == self.goalNode and state[1] is "none":
+                    # becomes the terminal state in a way with no cost
+                    R[s][a] = 1
+                # cost for calling in crosswalk state
+                elif state[0] == 4 and action is "call" and state[1] is "none":
+                    R[s][a] -= 10
+                # normal move has edge cost
+                elif action is not "call":
+                	# compute valid moves on map given state
+                    validMoves = self.map[state[0]]
+                    for destination in validMoves:
+                        if destination[0] == action:
+                            R[s][a] -= destination[1]
+                else:
+                    R[s][a] -= 200
         return R
 
     def initialize(self):
@@ -298,7 +334,8 @@ class RouteMDP(object):
         self.currentState = self.states.index(successor)
 
 def main():
-    route = RouteMDP()
+    goalNode = 7
+    route = RouteMDP(goalNode)
     route.initialize()
     route.solve()
 
