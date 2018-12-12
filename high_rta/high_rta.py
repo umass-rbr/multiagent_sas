@@ -332,6 +332,7 @@ class RTAMDP(object):
 
 
         R = [[0.0 for a in range(self.mdp.m)] for s in range(self.mdp.n)]
+        R_full = [[[0.0 for sp in range(self.mdp.ns)] for a in range(self.mdp.m)] for s in range(self.mdp.n)]
 
         for s, state in enumerate(self.states):
             for a, action in enumerate(self.actions):
@@ -347,14 +348,13 @@ class RTAMDP(object):
                     for (task,robot) in action:
                         if task not in state[1]:
                             continue
-                        elif task in statePrime[1]: #robot broke
-                            #if state[2][robot.get_id()] == 1 and statePrime[2][robot.get_id()] == 0:
-                                #R[s][a][sp] -= robot.get_break_cost(statePrime[2][robot.get_id()])
+                        elif task in statePrime[1]:
                             reward -= 100
                         else:
                             reward -= robot.calculate_time(task[2],task[3])
                     R[s][a] += T[s][a][sp] * reward
-        return R
+                    R_full[s][a][sp] = reward
+        return (R,R_full)
 
     def initialize(self):
         """ Initialize the nova MDP using the map from 'snap' Cartographer. """
@@ -379,11 +379,11 @@ class RTAMDP(object):
         self.mdp.S = array_type_nmns_int(*np.array(S).flatten())
         self.mdp.T = array_type_nmns_float(*np.array(self.T).flatten())
 
-        self.R = self._compute_rewards(self.T)
+        R, self.R_full = self._compute_rewards(self.T)
         array_type_nm_float = ct.c_float * (self.mdp.n * self.mdp.m)
-        self.mdp.R = array_type_nm_float(*np.array(self.R).flatten())
-        self.mdp.Rmax = float(np.array(self.R).max())
-        self.mdp.Rmin = float(np.array(self.R).min())
+        self.mdp.R = array_type_nm_float(*np.array(R).flatten())
+        self.mdp.Rmax = float(np.array(R).max())
+        self.mdp.Rmin = float(np.array(R).min())
 
     def solve(self):
         """ Use the nova MDP to compute the policy. """
@@ -493,7 +493,7 @@ class RTAMDP(object):
             s = self.currentState
             a = self.policy.action(self.currentState)
             self.execute_take_action(a)
-            reward += self.mdp.R[s * self.mdp.m + a]
+            reward += self.R_full[s][a][self.currentState]
 
             a_out = ''
             for (task,robot) in self.actions[a]:
