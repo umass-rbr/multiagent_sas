@@ -52,9 +52,10 @@ def power_set(iterable):
 class RouteMDP(object):
     """ The high-level route MDP that decides path for delivery. """
 
-    def __init__(self, goalNode):
+    def __init__(self, initialNode, goalNode):
         """ The constructor for the RouteMDP object. """
 
+        self.initialNode = initialNode
         self.goalNode = goalNode
         self.map = campus_map.generate_map()  #The map of campus as a dictionary
         # self.failedTransitions = [0, 1, 2, 3, 4, 5]
@@ -171,7 +172,7 @@ class RouteMDP(object):
                         validMoves = self.map[state[0]]
                         for destination in validMoves:
                             if action == destination[0] and statePrime[1] is "none" and statePrime[0] == destination[0]:
-                                T[s][a][sp] = 1/len(validMoves)
+                                T[s][a][sp] = 1#/len(validMoves)
                     # # check for action call
                     # elif action is "call":
                     # 	# for now, you just get approved to move. duplicated code.
@@ -301,7 +302,7 @@ class RouteMDP(object):
         #self.currentState = rnd.randint(1, len(self.states) - 1)
 
         # Always initalize to the active tasks: Clean and Medicate.
-        self.currentState = self.states.index({"Clean", "Medicate"})
+        self.currentState = self.states.index((self.initialNode, "none"))
 
     def execute_get_state(self):
         """ During execution, get the current state.
@@ -324,6 +325,16 @@ class RouteMDP(object):
 
         return action
 
+    def execute_take_action(self,action):
+        rand = np.random.uniform()
+        thresh = 0
+        for sp in range(self.mdp.n):
+            thresh += self.mdp.T[self.currentState * (self.mdp.m* self.mdp.ns) + action * (self.mdp.ns) + sp]
+            if rand <= thresh:
+                self.currentState = sp
+                break
+        return
+
     def execute_update_state(self, successor):
         """ During execution, update the current state, but here we are removing (and adding) issues.
 
@@ -333,10 +344,40 @@ class RouteMDP(object):
 
         self.currentState = self.states.index(successor)
 
-def main():
+    def simulate(self):
+        """ Simulate a trial starting at initial state.
+            Parameters:
+            Returns:
+                The reward/cost of a stochastic simulation following the optimal policy.
+        """
+        reward = 0
+        R = self._compute_rewards()
+        S, T = self._compute_state_transitions()
+        self.execute_reset()
+        while self.execute_get_state()[0] < self.mdp.horizon :
+            s = self.currentState
+            a = self.policy.action(self.currentState)
+            self.execute_take_action(a)
+            reward += R[s][a]
+
+            a_out = "[ " + str(self.actions[a]) + " , " + " ], "
+
+            print("*******\n" + 
+                  "s: " + str(s) + " | " + str(self.states[s]) + "\n" + 
+                  "a: " + str(a) + " | " + a_out + "\n" +
+                  "sp: " + str(self.currentState) + " | " + str(self.execute_get_state()) + "\n" +
+                  "T[s][a][sp]: " + str(T[s][a][self.currentState]) + "\n" +
+                  "Reward: " + str(reward) + "\n" +
+                  "*******\n")
+
+            if s == self.currentState or len(self.execute_get_state()[1]) == 0: break
+
+        return (self.currentState, reward)
+
+if __name__ == "__main__":
     goalNode = 7
-    route = RouteMDP(goalNode)
+    initialNode = 0
+    route = RouteMDP(initialNode, goalNode)
     route.initialize()
     route.solve()
-
-main()
+    route.simulate()
