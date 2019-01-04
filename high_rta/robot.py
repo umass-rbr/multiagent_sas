@@ -3,7 +3,7 @@ import itertools as it
 
 import campus_map
 
-class robot():
+class Robot():
 	def __init__(self, r_id, r_type, pos):
 		self.id = r_id
 		self.r_type = r_type
@@ -34,7 +34,7 @@ class robot():
 				return 2*campus_map.distance(l1,l2)
 		else: #Human
 			return 4*campus_map.distance(l1,l2)
-			
+
 	def get_id(self):
 		return self.id
 	def get_type(self):
