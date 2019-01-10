@@ -1,0 +1,20 @@
+(define (problem escort)
+
+(:domain world)
+
+(:objects {})
+
+(:init
+    (at jackal amrl)
+    
+    {}
+    
+    (= (total_distance_travelled) 0))
+
+(:goal {})
+
+(:metric minimize (total_distance_travelled))
+
+)
+
+
