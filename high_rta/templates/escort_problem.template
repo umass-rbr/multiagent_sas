@@ -2,19 +2,20 @@
 
 (:domain world)
 
-(:objects {})
+(:objects 
+    {0})
 
 (:init
-    (at jackal amrl)
+    {1}
     
-    {}
+    {2}
     
     (= (total_distance_travelled) 0))
 
-(:goal {})
+(:goal 
+    {3})
 
 (:metric minimize (total_distance_travelled))
 
 )
-
 

@@ -33,7 +33,7 @@ class Robot():
             if campus_map.get_building(l1) != campus_map.get_building(l2):
                 return campus_map.distance(l1, l2)
             return 2 * campus_map.distance(l1, l2)
-                
+
         return 4 * campus_map.distance(l1, l2)
 
     def get_id(self):

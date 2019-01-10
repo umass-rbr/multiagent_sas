@@ -1,20 +1,7 @@
-import numpy as np
-import itertools as it
-
-import campus_map
-import robot
-
 class EscortTask():
-	"""docstring for ClassName"""
-	def __init__(self, person, pickup, dropoff, start, end):
-		self.person = person
-		self.pickup = pickup
-		self.dropoff = dropoff
-		self.start = start
-		self.end = end
-		
-
-class DeliveryTask(object):
-	"""docstring for DeliveryTask"""
-	def __init__(self, object, start, end):
-		
+    def __init__(self, person, start_location, end_location, start_time, end_time):
+        self.person = person
+        self.start_location = start_location
+        self.end_location = end_location
+        self.start_time = start_time
+        self.end_time = end_time
