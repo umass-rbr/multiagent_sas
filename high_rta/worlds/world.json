@@ -1,30 +1,30 @@
 {
-	"locations": {
-		"shlomoOffice": {
+    "locations": {
+        "shlomoOffice": {
             "name": "Shlomo's Office",
-			"position": {
+            "position": {
                 "x": 0, 
                 "y": 0
             }
-		},
-		"amrl": {
-			"name": "AMRL", 
-			"position": {
+        },
+        "amrl": {
+            "name": "AMRL", 
+            "position": {
                 "x": 5,
                 "y": 5
             }
-		}
+        }
     },
-	"paths": [
-		{
-			"startLocation": "shlomoOffice",
-			"endLocation": "amrl",
-			"distance": 25
+    "paths": [
+        {
+            "startLocation": "shlomoOffice",
+            "endLocation": "amrl",
+            "distance": 25
         },
         {
-			"startLocation": "amrl",
-			"endLocation": "shlomoOffice",
-			"distance": 25
+            "startLocation": "amrl",
+            "endLocation": "shlomoOffice",
+            "distance": 25
         }
-	]
+    ]
 }
