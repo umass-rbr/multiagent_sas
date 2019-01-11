@@ -12,14 +12,14 @@ WORLDS_DIRECTORY = "worlds/"
 TASK_DURATION = 900
 
 def main():
-    # TODO Ask Sadegh about convention
     # TODO Ask Sadegh about node structure
-    pub = rospy.Publisher('task_assignment', TaskAssignment)
-    rospy.init_node('TaskAssigner')
+    pub = rospy.Publisher('task_assigner/assignment', TaskAssignment)
+    rospy.init_node('task_assigner')
 
     with open('mdp_info.json', 'r') as mdp_info_file:
         mdp_info = json.loads(mdp_info_file)
 
+        # TODO Make a a map service
         with open(WORLDS_DIRECTORY + "world.json", "r") as world_file:
             world = json.load(world_file)
 
