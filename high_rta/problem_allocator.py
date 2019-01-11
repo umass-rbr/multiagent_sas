@@ -14,7 +14,7 @@ import problem_generator
 WORLDS_DIRECTORY = "worlds/"
 
 mdp_info = ''
-with open('mdp_info.json','r') as f:
+with open('mdp_info.json', 'r') as f:
 	mdp_info = json.load(f)
 state_map = mdp_info['states']
 action_map = mdp_info['actions']
@@ -26,9 +26,9 @@ current_state = status.get_current_state() # There needs to be something to call
 action_to_take = actions[policy[states[currentState]]]
 
 with open(WORLDS_DIRECTORY + "world.json", "r") as world_file:
-	for (t,r) in action_to_take:
+	for (t, r) in action_to_take:
 		# TO DO: Either need to make t into a task object here,
 		# or change high_rta to function task objects. This second thing is
 		# probably better design.
-		problem_file = open( (str(r.get_ID()) + "_assignment.pddl") , "w+")
-		problem_file.write(problem_generator.generate_escort_problem(r,t,json.load(world_file)))
+		problem_file = open( (str(r.get_ID()) + "_assignment.pddl"), "w+")
+		problem_file.write(problem_generator.generate_escort_problem(r, t, json.load(world_file)))
