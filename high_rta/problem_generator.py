@@ -1,6 +1,6 @@
 import json
 
-import world_handler
+import utils
 from item import Item
 from robot import Robot
 from task import DeliveryTask, EscortTask
@@ -36,7 +36,7 @@ def make_distance_assignment(start_location_id, end_location_id, distance):
 def generate_objects(robot, items, world):
     robot_declaration = make_object_declaration(robot.id, "robot")
     item_declarations = [make_object_declaration(item.id, item.type) for item in items]
-    location_declarations = [make_object_declaration(location_id, "location") for location_id in world_handler.get_location_ids(world)]
+    location_declarations = [make_object_declaration(location_id, "location") for location_id in utils.get_location_ids(world)]
     return LINE_DELIMITER.join([robot_declaration] + item_declarations + location_declarations)
 
 
