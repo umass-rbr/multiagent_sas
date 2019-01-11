@@ -50,8 +50,8 @@ def generate_world(world):
     features = []
 
     for path in world["paths"]:
-        features.append(make_connected_predicate(path['startLocation'], path["endLocation"]))
-        features.append(make_distance_assignment(path['startLocation'], path["endLocation"], path["distance"]))
+        features.append(make_connected_predicate(path['startLocationId'], path["endLocationId"]))
+        features.append(make_distance_assignment(path['startLocationId'], path["endLocationId"], path["distanceId"]))
 
     return LINE_DELIMITER.join(features)
 
