@@ -1,7 +1,7 @@
 import json
 import rospy
 
-from msg import Problem
+from msg import TaskAssignment
 
 import problem_generator
 import robot
@@ -9,30 +9,34 @@ import task
 import utils
 
 WORLDS_DIRECTORY = "worlds/"
+TASK_DURATION = 900
 
 def main():
-    pub = rospy.Publisher('Task Assigner', Problem)
+    # TODO Ask Sadegh about convention
+    # TODO Ask Sadegh about node structure
+    pub = rospy.Publisher('task_assignment', TaskAssignment)
+    rospy.init_node('TaskAssigner')
 
-    with open('mdp_info.json', 'r') as f:
-        mdp_info = json.loads(f)
-
-        # TODO Query state from some source
-        current_state = status.get_current_state()
-        current_action = utils.get_action(mdp_info, current_state)
+    with open('mdp_info.json', 'r') as mdp_info_file:
+        mdp_info = json.loads(mdp_info_file)
 
         with open(WORLDS_DIRECTORY + "world.json", "r") as world_file:
-            for t, r in current_action:
-                # TODO Either need to make it into a task object here, or change high_rta to 
-                # function task objects. The second option is probably better design.
-                rospy.init_node('Assigner')
-                r = rospy.Rate(10)
-                msg = Problem()
-                msg.problem = problem_generator.generate_escort_problem(r,t,json.load(world_file))
+            world = json.load(world_file)
 
-                while not rospy.is_shutdown():
-                    rospy.log_info(msg)
+            while not rospy.is_shutdown():
+                # TODO Query state from some source
+                current_state = status.get_current_state()
+                current_action = utils.get_action(mdp_info, current_state)
+
+                for t, r in current_action:
+                    msg = TaskAssignment()
+                    msg.robot_id = r.get_id()
+                    msg.problem = problem_generator.generate_escort_problem(r, t, world)
+
+                    rospy.loginfo(msg)
                     pub.publish(msg)
-                    r.sleep()
+
+                rospy.sleep(TASK_DURATION)
 
 
 if __name__ == "__main__":
