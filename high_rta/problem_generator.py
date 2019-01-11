@@ -73,7 +73,7 @@ def generate_escort_problem(robot, task, world):
 
 
 def main():
-    with open(WORLDS_DIRECTORY + "world.json", "r") as world_file:
+    with open(WORLDS_DIRECTORY + "lgrc.json", "r") as world_file:
         robot = Robot("cobot", 0, "amrl")
         task = EscortTask("shlomo", "shlomoOffice", "amrl", "10:30", "10:45")
         world = json.load(world_file)
