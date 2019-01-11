@@ -24,23 +24,23 @@
     },
     "paths": [
         {
-            "startLocation": "shlomoOffice",
-            "endLocation": "amrl",
+            "startLocationId": "shlomoOffice",
+            "endLocationId": "amrl",
             "distance": 25
         },
         {
-            "startLocation": "amrl",
-            "endLocation": "shlomoOffice",
+            "startLocationId": "amrl",
+            "endLocationId": "shlomoOffice",
             "distance": 25
         },
         {
-            "startLocation": "mailroom",
-            "endLocation": "amrl",
+            "startLocationId": "mailroom",
+            "endLocationId": "amrl",
             "distance": 25
         },
         {
-            "startLocation": "mailroom",
-            "endLocation": "amrl",
+            "startLocationId": "mailroom",
+            "endLocationId": "amrl",
             "distance": 25
         }
     ]
