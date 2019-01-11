@@ -1,0 +1,21 @@
+(define (problem delivery)
+
+(:domain world)
+
+(:objects 
+    {0})
+
+(:init
+    {1}
+    
+    {2}
+    
+    (= (total_distance_travelled) 0))
+
+(:goal 
+    {3})
+
+(:metric minimize (total_distance_travelled))
+
+)
+
