@@ -19,6 +19,7 @@ class Robot():
                 return 0.05
             return 0.2
 
+        # Human
         return 0
 
     def calculate_time(self, l1, l2):
@@ -34,6 +35,7 @@ class Robot():
                 return campus_map.distance(l1, l2)
             return 2 * campus_map.distance(l1, l2)
 
+        # Human
         return 4 * campus_map.distance(l1, l2)
 
     def get_id(self):
