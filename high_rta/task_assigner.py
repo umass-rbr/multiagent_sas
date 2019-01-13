@@ -9,10 +9,17 @@ import task
 import utils
 
 WORLDS_DIRECTORY = "worlds/"
-TASK_DURATION = 900
+TASK_DURATION = 1800
 
-def main():
+current_state = None
+
+rospy.init_node('state_listener')
+rospy.Subscriber('state_information', State, assign_tasks)
+
+def assign_tasks(data):
     # TODO Ask Sadegh about node structure
+    current_state = unpack(data)
+
     pub = rospy.Publisher('task_assigner/assignment', TaskAssignment)
     rospy.init_node('task_assigner')
 
@@ -25,7 +32,6 @@ def main():
 
             while not rospy.is_shutdown():
                 # TODO Query state from some source
-                current_state = status.get_current_state()
                 current_action = utils.get_action(mdp_info, current_state)
 
                 for t, r in current_action:
@@ -38,6 +44,18 @@ def main():
 
                 rospy.sleep(TASK_DURATION)
 
+def unpack(data):
+    time = data.time
+    list_tasks_as_strings = data.tasks.split('\n')
+    list_tasks_as_objects = [convert_tasks_str_obj(task) for task in list_tasks_as_strings]
+    robot_status = data.robot_status
+    return set(time,list_tasks_as_objects,robot_status)
 
-if __name__ == "__main__":
-    main()
+def convert_tasks_str_obj(task):
+    task_info = task.split(',')
+    if task.get_type() == 'delivery':
+        return task.DeliveryTask(int(task_info[0]),task_info[1],task_info[2]
+            task_info[3],task_info[4],task_info[5])
+    elif task.get_type() == 'escort':
+        return task.EscortTask(int(task_info[0]),task_info[1],task_info[2]
+            task_info[3],task_info[4],task_info[5])

@@ -494,10 +494,10 @@ class RTAMDP(object):
 if __name__ == "__main__":
     """ If script is called by python interpreter execute the following experiment simulation. """
 
-    t1 = task.DeliveryTask('package1','2','1','0','3')
-    t2 = task.DeliveryTask('package2','1','0','0','2')
-    t3 = task.DeliveryTask('package3','1','2','1','4')
-    t4 = task.DeliveryTask('package4','2','3','3','4')
+    t1 = task.DeliveryTask(0,'package1','2','1','0','3')
+    t2 = task.DeliveryTask(1,'package2','1','0','0','2')
+    t3 = task.DeliveryTask(2,'package3','1','2','1','4')
+    t4 = task.DeliveryTask(3,'package4','2','3','3','4')
 
     T = [t1,t2,t3,t4]
     R = [robot.Robot(0,0,0), robot.Robot(1,1,3), robot.Robot(2,2,2)]
