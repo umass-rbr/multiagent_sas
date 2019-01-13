@@ -38,7 +38,7 @@ import ctypes as ct
 import numpy as np
 
 import robot
-
+import task
 
 def power_set(iterable):    
     """ Return the power set of any iterable (e.g., list) with set elements. """
@@ -191,7 +191,7 @@ class RTAMDP(object):
                                     T[s][a][sp] = 0.0
                                     break
                                 # Only assign possible tasks
-                                if task[0] > state[0] or task[1] < statePrime[0]:
+                                if task.start_time > state[0] or task.end_time < statePrime[0]:
                                     T[s][a][sp] = 0.0
                                     break
                                 # If robot breaks
@@ -200,9 +200,9 @@ class RTAMDP(object):
                                     if task in state[1] and task in statePrime[1]: 
                                         # Update the transition probability
                                         if T[s][a][sp] == 0:
-                                            T[s][a][sp] = robot.get_break_probability(task[2],task[3])
+                                            T[s][a][sp] = robot.get_break_probability(task.start_location,task.end_location)
                                         else:
-                                            T[s][a][sp] = T[s][a][sp]*robot.get_break_probability(task[2],task[3])
+                                            T[s][a][sp] = T[s][a][sp]*robot.get_break_probability(task.start_location,task.end_location)
                                     else: 
                                         T[s][a][sp] = 0.0
                                         break
@@ -212,9 +212,9 @@ class RTAMDP(object):
                                     if task in state[1] and task not in statePrime[1]: 
                                         # Update the transition probability
                                         if T[s][a][sp] == 0.0:
-                                            T[s][a][sp] = (1-robot.get_break_probability(task[2],task[3]))
+                                            T[s][a][sp] = (1-robot.get_break_probability(task.start_location,task.end_location))
                                         else:
-                                            T[s][a][sp] = T[s][a][sp]*(1-robot.get_break_probability(task[2],task[3]))
+                                            T[s][a][sp] = T[s][a][sp]*(1-robot.get_break_probability(task.start_location,task.end_location))
                                     else:
                                         T[s][a][sp] = 0.0
                                         break
@@ -273,7 +273,7 @@ class RTAMDP(object):
                     reward = 0
                     for task in statePrime[1]:
                         # If available task is not completed, punish for length of action time (delta)
-                        if task[0] < statePrime[0]:
+                        if task.start_time < statePrime[0]:
                             reward -= self.delta 
                     for (task,robot) in action:
                         # Action is invalid so skip because T is 0
@@ -284,7 +284,7 @@ class RTAMDP(object):
                             reward -= 100
                         # Robot successfully completes the task
                         else:
-                            reward -= robot.calculate_time(task[2],task[3])
+                            reward -= robot.calculate_time(task.start_location,task.end_location)
                     R[s][a] += T[s][a][sp] * reward
                     R_full[s][a][sp] = reward
         return (R,R_full)
@@ -494,10 +494,12 @@ class RTAMDP(object):
 if __name__ == "__main__":
     """ If script is called by python interpreter execute the following experiment simulation. """
 
-    T = [ (0,3,2,1),
-          (0,2,1,0),
-          (1,4,1,2),
-          (3,4,2,3)]
+    t1 = task.DeliveryTask('package1','2','1','0','3')
+    t2 = task.DeliveryTask('package2','1','0','0','2')
+    t3 = task.DeliveryTask('package3','1','2','1','4')
+    t4 = task.DeliveryTask('package4','2','3','3','4')
+
+    T = [t1,t2,t3,t4]
     R = [robot.Robot(0,0,0), robot.Robot(1,1,3), robot.Robot(2,2,2)]
     rta = RTAMDP(T,R)
 
