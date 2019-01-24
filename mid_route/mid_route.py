@@ -1,10 +1,3 @@
-import numpy as np
-import ctypes as ct
-import itertools as it
-import campus_map
-from nova.mdp_value_function import MDPValueFunction
-from nova.mdp_vi import MDPVI
-from nova.mdp import MDP
 """ The MIT License (MIT)
 
     Copyright (c) 2018 Kyle Hollins Wray, University of Massachusetts
@@ -34,10 +27,17 @@ import time
 thisFilePath = os.path.dirname(os.path.realpath(__file__))
 
 sys.path.append(os.path.join(thisFilePath, "..", "..", "nova", "python"))
+from nova.mdp import MDP
+from nova.mdp_vi import MDPVI
+from nova.mdp_value_function import MDPValueFunction
 
+import campus_map
 
 # import rospy
 
+import itertools as it
+import ctypes as ct
+import numpy as np
 
 def power_set(iterable):
     """ Return the power set of any iterable (e.g., list) with set elements. """
