@@ -1,3 +1,10 @@
+import numpy as np
+import ctypes as ct
+import itertools as it
+import campus_map
+from nova.mdp_value_function import MDPValueFunction
+from nova.mdp_vi import MDPVI
+from nova.mdp import MDP
 """ The MIT License (MIT)
 
     Copyright (c) 2018 Kyle Hollins Wray, University of Massachusetts
@@ -27,24 +34,17 @@ import time
 thisFilePath = os.path.dirname(os.path.realpath(__file__))
 
 sys.path.append(os.path.join(thisFilePath, "..", "..", "nova", "python"))
-from nova.mdp import MDP
-from nova.mdp_vi import MDPVI
-from nova.mdp_value_function import MDPValueFunction
 
-import campus_map
 
 # import rospy
-
-import itertools as it
-import ctypes as ct
-import numpy as np
 
 
 def power_set(iterable):
     """ Return the power set of any iterable (e.g., list) with set elements. """
 
     s = list(iterable)
-    powerSet = it.chain.from_iterable(it.combinations(s, r) for r in range(len(s) + 1))
+    powerSet = it.chain.from_iterable(
+        it.combinations(s, r) for r in range(len(s) + 1))
     powerSetList = [set(ele) for ele in list(powerSet)]
     return powerSetList
 
@@ -57,10 +57,9 @@ class RouteMDP(object):
 
         self.initialNode = initialNode
         self.goalNode = goalNode
-        self.map = campus_map.generate_map(mapNumber)  #The map of campus as a dictionary
-        # self.failedTransitions = [0, 1, 2, 3, 4, 5]
+        # The map of campus as a dictionary
+        self.map = campus_map.generate_map(mapNumber)
         self.obstacles = ["none", "crosswalk", "door"]
-        # self.teleoperation = [True, False]
 
         self.mdp = None
         self.policy = None
@@ -97,11 +96,11 @@ class RouteMDP(object):
 
         # using nodes of map graph in map.keys()
         S = list(
-                it.product(
-                    list(self.map.keys()),
-                    self.obstacles
-            	)
+            it.product(
+                list(self.map.keys()),
+                self.obstacles
             )
+        )
 
         return S
 
@@ -131,8 +130,10 @@ class RouteMDP(object):
                 T   --  The n-m-ns lists of state transition probabilities.
         """
 
-        S = [[[int(-1) for sp in range(self.mdp.ns)] for a in range(self.mdp.m)] for s in range(self.mdp.n)]
-        T = [[[float(0.0) for sp in range(self.mdp.ns)] for a in range(self.mdp.m)] for s in range(self.mdp.n)]
+        S = [[[int(-1) for sp in range(self.mdp.ns)]
+              for a in range(self.mdp.m)] for s in range(self.mdp.n)]
+        T = [[[float(0.0) for sp in range(self.mdp.ns)]
+              for a in range(self.mdp.m)] for s in range(self.mdp.n)]
 
         for s, state in enumerate(self.states):
             for a, action in enumerate(self.actions):
@@ -153,13 +154,6 @@ class RouteMDP(object):
                         destinationObstacle = destination[2]
 
                 if validAction is True:
-
-                    # if state == (3, "none"):
-                    #     print()
-                    #     print("state", state)
-                    #     print("action", action)
-                    #     print("valid moves", validMoves)
-                    #     print()
 
                     for sp, statePrime in enumerate(self.states):
                         S[s][a][sp] = sp
@@ -185,14 +179,15 @@ class RouteMDP(object):
                 # TODO: Check if T sums to 1.
                 check = 0.0
                 for sp, statePrime in enumerate(self.states):
-                   check += T[s][a][sp]
-                print("State:", state, " ***** Action:", action, " ***** Check:", check)
+                    check += T[s][a][sp]
+                print("State:", state, " ***** Action:",
+                      action, " ***** Check:", check)
 
         return S, T
 
     def _compute_rewards(self):
         """ Compute the rewards for the TaskMDP.
-        
+
             This assumes states, actions, n, and m are set.
 
             Returns:
@@ -203,7 +198,7 @@ class RouteMDP(object):
 
         for s, state in enumerate(self.states):
             for a, action in enumerate(self.actions):
-                
+
                 # check valid actions on map
                 validActions = list(x[0] for x in self.map[state[0]])
                 validActionsCost = list(y[1] for y in self.map[state[0]])
@@ -243,8 +238,10 @@ class RouteMDP(object):
         self.mdp.ng = int(0)
 
         S, T = self._compute_state_transitions()
-        array_type_nmns_int = ct.c_int * (self.mdp.n * self.mdp.m * self.mdp.ns)
-        array_type_nmns_float = ct.c_float * (self.mdp.n * self.mdp.m * self.mdp.ns)
+        array_type_nmns_int = ct.c_int * \
+            (self.mdp.n * self.mdp.m * self.mdp.ns)
+        array_type_nmns_float = ct.c_float * \
+            (self.mdp.n * self.mdp.m * self.mdp.ns)
         self.mdp.S = array_type_nmns_int(*np.array(S).flatten())
         self.mdp.T = array_type_nmns_float(*np.array(T).flatten())
 
@@ -329,11 +326,12 @@ class RouteMDP(object):
 
         return action
 
-    def execute_take_action(self,action):
+    def execute_take_action(self, action):
         rand = np.random.uniform()
         thresh = 0
         for sp in range(self.mdp.n):
-            thresh += self.mdp.T[self.currentState * (self.mdp.m* self.mdp.ns) + action * (self.mdp.ns) + sp]
+            thresh += self.mdp.T[self.currentState *
+                                 (self.mdp.m * self.mdp.ns) + action * (self.mdp.ns) + sp]
             if rand <= thresh:
                 self.currentState = sp
                 break
@@ -358,7 +356,7 @@ class RouteMDP(object):
         R = self._compute_rewards()
         S, T = self._compute_state_transitions()
         self.execute_reset()
-        while self.execute_get_state()[0] < self.mdp.horizon :
+        while self.execute_get_state()[0] < self.mdp.horizon:
             s = self.currentState
             a = self.policy.action(self.currentState)
             self.execute_take_action(a)
@@ -366,22 +364,22 @@ class RouteMDP(object):
 
             a_out = "[ " + str(self.actions[a]) + " , " + " ], "
 
-            print("*******\n" + 
-                  "s: " + str(s) + " | " + str(self.states[s]) + "\n" + 
+            print("*******\n" +
+                  "s: " + str(s) + " | " + str(self.states[s]) + "\n" +
                   "a: " + str(a) + " | " + a_out + "\n" +
                   "sp: " + str(self.currentState) + " | " + str(self.execute_get_state()) + "\n" +
                   "T[s][a][sp]: " + str(T[s][a][self.currentState]) + "\n" +
                   "Reward: " + str(reward) + "\n" +
                   "*******\n")
 
-            if s == self.currentState or len(self.execute_get_state()[1]) == 0: 
-            	break
+            if s == self.currentState or len(self.execute_get_state()[1]) == 0:
+                break
 
         return (self.currentState, reward)
 
         reward = 0
         self.execute_reset()
-        while self.execute_get_state()[0] < self.mdp.horizon :
+        while self.execute_get_state()[0] < self.mdp.horizon:
             s = self.currentState
             a = self.policy.action(self.currentState)
 
@@ -390,19 +388,20 @@ class RouteMDP(object):
 
             reward += self.R_full[s][a][self.currentState]
 
-            print("*******\n" + 
-                  "s: " + str(s) + " | " + str(self.states[s]) + "\n" + 
+            print("*******\n" +
+                  "s: " + str(s) + " | " + str(self.states[s]) + "\n" +
                   "a: " + str(a) + " | " + "\n" +
                   "sp: " + str(self.currentState) + " | " + str(self.execute_get_state()) + "\n" +
                   "T[s][a][sp]: " + str(self.T[s][a][self.currentState]) + "\n" +
                   "Reward: " + str(reward) + "\n" +
                   "*******\n")
 
-            #If in goal state, end the simulation.
-            if s == (self.goalNode, "none"): 
+            # If in goal state, end the simulation.
+            if s == (self.goalNode, "none"):
                 break
 
         return (self.currentState, reward)
+
 
 if __name__ == "__main__":
     initialNode = 0
