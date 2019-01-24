@@ -52,14 +52,14 @@ def power_set(iterable):
 class RouteMDP(object):
     """ The high-level route MDP that decides path for delivery. """
 
-    def __init__(self, initialNode, goalNode):
+    def __init__(self, initialNode, goalNode, mapNumber):
         """ The constructor for the RouteMDP object. """
 
         self.initialNode = initialNode
         self.goalNode = goalNode
-        self.map = campus_map.generate_map()  #The map of campus as a dictionary
+        self.map = campus_map.generate_map(mapNumber)  #The map of campus as a dictionary
         # self.failedTransitions = [0, 1, 2, 3, 4, 5]
-        self.obstacles = ["none", "crosswalk"]
+        self.obstacles = ["none", "crosswalk", "door"]
         # self.teleoperation = [True, False]
 
         self.mdp = None
@@ -92,17 +92,15 @@ class RouteMDP(object):
         """ Compute the set of states from the state factores for the RouteMDP.
             Returns:
                 S -- the set of states.
-                s in S := ([campus_map], [failed_transitions], [obstacles], [teleoperation])
+                s in S := ([campus_map], [obstacles])
         """
 
         # using nodes of map graph in map.keys()
         S = list(
-	            it.product(
-	            	list(self.map.keys()),
-	            	# self.failedTransitions,
-	            	self.obstacles
-	            	# self.teleoperation
-        		)
+                it.product(
+                    list(self.map.keys()),
+                    self.obstacles
+            	)
             )
 
         return S
@@ -115,16 +113,11 @@ class RouteMDP(object):
 
         '''
         actions include:
-            observe -- staying in current state to observe
-            move -- moving to next state
-            call -- calling for human help
-
-        if failed_transition = 5 then call for human help
-
+            move -- moving to next state with valid node on map
+            toc -- transfer of control to deal with obstacles
         '''
 
-        A = list(self.map.keys())
-        A.append("call")
+        A = list(self.map.keys()) + ["toc"]
 
         return A
 
@@ -143,44 +136,51 @@ class RouteMDP(object):
 
         for s, state in enumerate(self.states):
             for a, action in enumerate(self.actions):
-                for sp, statePrime in enumerate(self.states):
-                    S[s][a][sp] = sp
-                    T[s][a][sp] = 0.0
 
-                    # # first check for when failedTransitions is at max
-                    # if state[1] == self.failed_transitions[-1] and action is "call":
-                    # 	# go to any state that has teleoperation = True
+                if state[0] == self.goalNode and state[1] == "none" and action == self.goalNode:
+                    T[s][a][s] = 1.0
 
-                    # check for goal node
-                    if state[0] == self.goalNode and action == self.goalNode and state[1] is "none":
-                        # can only transition to itself
-                        if statePrime[0] == self.goalNode and statePrime[1] is "none":
-                            T[s][a][sp] = 1.0
-                    # going from crosswalk state to goal node
-                    elif state[0] == 4 and action == self.goalNode and state[1] is "crosswalk":
-                        # moves from crosswalk to goal node
-                        if statePrime[0] == self.goalNode and statePrime[1] is "none":
-                                T[s][a][sp] = 1.0
-                    # going from crosswalk node to crosswalk state
-                    elif state[0] == 4 and action == "call" and state[1] is not "crosswalk":
-                        # transitions to crosswalk state with same graph node
-                        if statePrime[0] == 4 and statePrime[1] is "crosswalk":
-                            T[s][a][sp] = 1.0
-                    # going around the map on nodes
-                    elif state[0] != 4 and state[0] != self.goalNode and action != self.goalNode and state[1] is "none":
-                        # calculate valid moves on the map
-                        validMoves = self.map[state[0]]
-                        for destination in validMoves:
-                            if action == destination[0] and statePrime[1] is "none" and statePrime[0] == destination[0]:
-                                T[s][a][sp] = 1#/len(validMoves)
-                    # # check for action call
-                    # elif action is "call":
-                    # 	# for now, you just get approved to move. duplicated code.
-                    # 	nextNode = statePrime[0]
-                    # 	for destination in validMoves:
-                    # 		if destination is nextNode:
-                    # 			T[s][a][sp] = 1.0
-                    # check for valid moves on the map
+                # check for valid actions to nodes on map
+                validMoves = self.map[state[0]]
+                validAction = False
+                destinationNode = None
+                destinationObstacle = None
+                for destination in validMoves:
+                    # if action is valid
+                    if action == destination[0] or action == "toc":
+                        validAction = True
+                        destinationNode = destination[0]
+                        destinationObstacle = destination[2]
+
+                if validAction is True:
+
+                    # if state == (3, "none"):
+                    #     print()
+                    #     print("state", state)
+                    #     print("action", action)
+                    #     print("valid moves", validMoves)
+                    #     print()
+
+                    for sp, statePrime in enumerate(self.states):
+                        S[s][a][sp] = sp
+                        T[s][a][sp] = 0.0
+
+                        if state[0] != self.goalNode:
+
+                            # transition with no obstacle
+                            if destinationObstacle == "none" and state[1] == "none" and action == destinationNode:
+                                if statePrime[0] == destinationNode and statePrime[1] == "none":
+                                    T[s][a][sp] = 1.0
+
+                            # transition into TOC state to deal with obstacle
+                            if destinationObstacle != "none" and state[1] == "none" and action == "toc":
+                                if statePrime[0] == state[0] and statePrime[1] == destinationObstacle:
+                                    T[s][a][sp] = 1.0
+
+                            # transition out of TOC state from obstacle
+                            if destinationObstacle != "none" and state[1] == destinationObstacle and action == destinationNode:
+                                if statePrime[0] == destinationNode and statePrime[1] == "none":
+                                    T[s][a][sp] = 1.0
 
                 # TODO: Check if T sums to 1.
                 check = 0.0
@@ -203,21 +203,25 @@ class RouteMDP(object):
 
         for s, state in enumerate(self.states):
             for a, action in enumerate(self.actions):
-				                
+                
+                # check valid actions on map
+                validActions = list(x[0] for x in self.map[state[0]])
+                validActionsCost = list(y[1] for y in self.map[state[0]])
+
                 # goal node stays in its own state
                 if state[0] == self.goalNode and action == self.goalNode and state[1] is "none":
-                    # becomes the terminal state in a way with no cost
-                    R[s][a] = 1
-                # cost for calling in crosswalk state
-                elif state[0] == 4 and action is "call" and state[1] is "none":
+                    # state with goal node is the terminal state
+                    R[s][a] += 1
+
+                # cost for transitioning to toc state
+                elif action is "toc" and state[1] is "none":
                     R[s][a] -= 10
-                # normal move has edge cost
-                elif action is not "call":
-                	# compute valid moves on map given state
-                    validMoves = self.map[state[0]]
-                    for destination in validMoves:
-                        if destination[0] == action:
-                            R[s][a] -= destination[1]
+
+                # cost for normal transitions
+                elif action in validActions:
+                    R[s][a] -= validActionsCost[validActions.index(action)]
+
+                # large penalty otherwise
                 else:
                     R[s][a] -= 200
         return R
@@ -370,14 +374,41 @@ class RouteMDP(object):
                   "Reward: " + str(reward) + "\n" +
                   "*******\n")
 
-            if s == self.currentState or len(self.execute_get_state()[1]) == 0: break
+            if s == self.currentState or len(self.execute_get_state()[1]) == 0: 
+            	break
+
+        return (self.currentState, reward)
+
+        reward = 0
+        self.execute_reset()
+        while self.execute_get_state()[0] < self.mdp.horizon :
+            s = self.currentState
+            a = self.policy.action(self.currentState)
+
+            if not (self.execute_take_action(a)):
+                print("Error in executing action " + str(a))
+
+            reward += self.R_full[s][a][self.currentState]
+
+            print("*******\n" + 
+                  "s: " + str(s) + " | " + str(self.states[s]) + "\n" + 
+                  "a: " + str(a) + " | " + "\n" +
+                  "sp: " + str(self.currentState) + " | " + str(self.execute_get_state()) + "\n" +
+                  "T[s][a][sp]: " + str(self.T[s][a][self.currentState]) + "\n" +
+                  "Reward: " + str(reward) + "\n" +
+                  "*******\n")
+
+            #If in goal state, end the simulation.
+            if s == (self.goalNode, "none"): 
+                break
 
         return (self.currentState, reward)
 
 if __name__ == "__main__":
-    goalNode = 7
     initialNode = 0
-    route = RouteMDP(initialNode, goalNode)
+    goalNode = 4
+    mapNumber = 0
+    route = RouteMDP(initialNode, goalNode, mapNumber)
     route.initialize()
     route.solve()
     route.simulate()

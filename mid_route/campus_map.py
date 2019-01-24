@@ -8,8 +8,9 @@ def generate_map(map_number):
     '''
         keys represent nodes on directed graph to other connected nodes
         values represent list of destination nodes and the cost for travel 
-        items in value are -- (destination, cost)
-        cost: 2 downhill, 4 level, 6 uphill, 10 crosswalk 
+        items in value are -- (destination, cost, obstacle)
+        cost: 2 downhill, 4 level, 6 uphill, 10 obstacle
+        obstacles include: crosswalk, door
     '''
     
     # creating first map
@@ -17,15 +18,15 @@ def generate_map(map_number):
         (1, 4, "none")
     ]
     campus_maps[0][1] = [
-        (0, 4, "none")
+        (0, 4, "none"),
         (2, 10, "crosswalk")
     ]
     campus_maps[0][2] = [
-        (1, 10, "crosswalk")
-        (3, 10, "crosswalk")
+        (1, 10, "crosswalk"),
+        (3, 10, "door")
     ]
     campus_maps[0][3] = [
-        (2, 10, "crosswalk")
+        (2, 10, "door"),
         (4, 4, "none")
         
     ]
@@ -73,19 +74,19 @@ def generate_map(map_number):
 
     # creating third map
     campus_maps[2][0] = [
-        (1, 10, "crosswalk")
+        (1, 10, "door"),
         (2, 10, "crosswalk")
     ]
     campus_maps[2][1] = [
-        (0, 10, "crosswalk")
+        (0, 10, "door"),
         (3, 10, "crosswalk")
     ]
     campus_maps[2][2] = [
-        (0, 10, "crosswalk")
-        (3, 10, "crosswalk")
+        (0, 10, "crosswalk"),
+        (3, 10, "door")
     ]
     campus_maps[2][3] = [
-        (2, 10, "crosswalk")
+        (2, 10, "door"),
         (1, 10, "crosswalk")
         
     ]
