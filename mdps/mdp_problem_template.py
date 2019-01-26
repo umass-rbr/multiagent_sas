@@ -39,7 +39,6 @@ import numpy as np
 
 import robot
 import task
-import worldMap
 
 def power_set(iterable):    
     """ Return the power set of any iterable (e.g., list) with set elements. """
@@ -50,18 +49,16 @@ def power_set(iterable):
     return powerSetList
 
 
-class DeliveryMDP(object):
+class RTAMDP(object):
     """ The high-level task MDP that decides which tasks to complete. """
 
 
-    def __init__(self, init_pos, task):
+    def __init__(self,tasks,robots,H=4,delta=30):
         """ The constructor for the TaskMDP object. """
         self.mdp = None
         self.policy = None
-        self.task = task
-        self.world = json.load(open(worldMap,'r'))
 
-        self.currentState = (init_pos, False)
+        self.currentState = 0
 
     def __str__(self):
         """ Make a pretty print of the MDP and its policy.
@@ -89,10 +86,8 @@ class DeliveryMDP(object):
 
             Returns:
                 S -- the list of states.
-                s in S := (location, has_package_bool)
         """
-        return list(it.product(self.world['locations'].keys(),[0,1]))
-
+        pass
         
     def _compute_actions(self):
         """ Compute the set of all actions for the RTAMDP.
@@ -100,7 +95,8 @@ class DeliveryMDP(object):
             Returns:
                 A -- the list of actions.
         """
-        return self.world['locations'].keys().append('pickup')
+
+        pass
 
     def _compute_state_transitions(self):
         """ Compute the state transitions for the TaskMDP.
@@ -118,23 +114,9 @@ class DeliveryMDP(object):
         for s, state in enumerate(self.states):
 
             for a, action in enumerate(self.actions):
-                if state[0] == self.task.end_location and state[1] == 1:
-                    T[s][a][s] = 1.0
-                    continue
 
                 for sp, statePrime in enumerate(self.states):
                     S[s][a][sp] = sp
-
-                    if action == 'pickup':
-                        if state[1] == 0 and statePrime[1] == 1 and self.task.start_location == state[0] and state[0] == statePrime[0]:
-                            T[s][a][sp] = 1.0
-                            break
-
-                    else: # Then action must be a location
-                        if self.world['paths'][state[0]][action] and action == statePrime[0]:
-                            T[s][a][sp] = 1.0
-                            break
-
 
                 # Uncomment to check if T sums to 1.
                 # check = 0.0
@@ -154,24 +136,14 @@ class DeliveryMDP(object):
         
             This assumes states, actions, n, and m are set.
 
+            Parameters:
+                T -- MDP Transition Matrix
+
             Returns:
-                R -- The n-m lists of rewards.
+                R   --  The n-m lists of rewards.
         """
 
         R = [[0.0 for a in range(self.mdp.m)] for s in range(self.mdp.n)]
-
-        for s, state in enumerate(self.states):
-
-            for a, action in enumerate(self.actions):
-                if action == 'pickup':
-                    if state[0] == self.task.start_location and state[1] == 0:
-                        R[s][a] += 10
-                else:
-                    path_cost = self.world['paths'][state[0]][action]
-                    if not path_cost:
-                        R[s][a] = float("-inf")
-                    else:
-                        R[s][a] -= path_cost
         
         return R
 
@@ -217,17 +189,6 @@ class DeliveryMDP(object):
         print(self.policy)
 
         #rospy.loginfo("Info[TaskMDP.solve]: Completed in %.3f seconds!" % (timing))
-
-    def get_policy(self,):
-        pi = {}
-        policy_as_string = str(self.policy)[str(self.policy).index('p'):]
-        policy_as_string = policy_as_string[policy_as_string.index('[')+1:policy_as_string.index(']')].strip()
-        policy_as_string = policy_as_string.replace("\n","")
-        policy_as_list = policy_as_string.split(" ")
-        policy_as_list = [c for c in policy_as_list if c]
-        for s in range(len(self.states)):
-            pi[str(s)] = policy_as_list[s]
-        return pi
 
     def save_policy(self, filename="task_mdp.policy"):
         """ Save the stored policy to a file.
@@ -382,4 +343,3 @@ class DeliveryMDP(object):
         ofile = open(absoluteName,'w+')
         ofile.write(mdp_info)
         ofile.close()
-
