@@ -39,8 +39,8 @@
             "distance": 25
         },
         {
-            "startLocationId": "mailroom",
-            "endLocationId": "amrl",
+            "startLocationId": "amrl",
+            "endLocationId": "mailroom",
             "distance": 25
         }
     ]
