@@ -54,14 +54,14 @@ class DeliveryMDP(object):
     """ The high-level task MDP that decides which tasks to complete. """
 
 
-    def __init__(self, init_pos, task):
+    def __init__(self, task):
         """ The constructor for the TaskMDP object. """
         self.mdp = None
         self.policy = None
         self.task = task
         self.world = json.load(open(worldMap,'r'))
 
-        self.currentState = (init_pos, False)
+        #self.currentState = (init_pos, False)
 
     def __str__(self):
         """ Make a pretty print of the MDP and its policy.
@@ -70,13 +70,13 @@ class DeliveryMDP(object):
                 A pretty string.
         """
 
-        result = "RTA MDP:\n\n"
+        result = "Delivery MDP:\n\n"
         if self.mdp is not None:
             result += str(self.mdp) + "\n\n"
         else:
             result += "Not yet defined.\n\n"
 
-        result += "RTA MDP Policy:\n\n"
+        result += "Delivery MDP Policy:\n\n"
         if self.policy is not None:
             result += str(self.policy)
         else:
@@ -216,7 +216,7 @@ class DeliveryMDP(object):
         print(self.mdp)
         print(self.policy)
 
-        #rospy.loginfo("Info[TaskMDP.solve]: Completed in %.3f seconds!" % (timing))
+        rospy.loginfo("Info[TaskMDP.solve]: Completed in %.3f seconds!" % (timing))
 
     def get_policy(self,):
         pi = {}
