@@ -55,12 +55,6 @@ class RTAMDP(object):
 
     def __init__(self,tasks,robots,H=4,delta=30):
         """ The constructor for the TaskMDP object. """
-
-        self.tasks = tasks #Tasks are tuples: <start_time, end_time, pickup, dropoff>
-        self.robots = robots #Robots are objects implemented in Robot.py
-        self.H = H #H is the Horizon
-        self.delta = delta #delta is the length of each 'action'
-
         self.mdp = None
         self.policy = None
 
@@ -92,7 +86,6 @@ class RTAMDP(object):
 
             Returns:
                 S -- the list of states.
-                s in S := (time, {current-tasks}, [robot-conditions])
         """
         pass
         
@@ -101,7 +94,6 @@ class RTAMDP(object):
 
             Returns:
                 A -- the list of actions.
-                a in A := [(task,robot)_1,...,(task,robot)_k]
         """
 
         pass
@@ -176,11 +168,7 @@ class RTAMDP(object):
         self.mdp.S = array_type_nmns_int(*np.array(S).flatten())
         self.mdp.T = array_type_nmns_float(*np.array(self.T).flatten())
 
-
-        # R is used for policy computation in NOVA
-        # R_Full is used later in simulate to keep tack of actual incurred rewards,
-        # not only the expected reward that is computed in R
-        R, self.R_full = self._compute_rewards(self.T)
+        R = self._compute_rewards(self.T)
         array_type_nm_float = ct.c_float * (self.mdp.n * self.mdp.m)
         self.mdp.R = array_type_nm_float(*np.array(R).flatten())
         self.mdp.Rmax = float(np.array(R).max())
