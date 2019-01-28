@@ -184,12 +184,16 @@ class RouteMDP(object):
                                 if statePrime[0] == action[0] and statePrime[1] == "inControl":
                                     T[s][a][sp] = 1.0
 
+                else:
+                    T[s][a][s] = 1.0
+
                 # TODO: Check if T sums to 1.
                 check = 0.0
                 for sp, statePrime in enumerate(self.states):
                     check += T[s][a][sp]
-                print("State:", state, " ***** Action:",
-                      action, " ***** Check:", check)
+                if not (abs(check - 1.0) < 0.001):
+                    print("State:", state, " ***** Action:",
+                        action, " ***** Check:", check)
 
         return S, T
 
@@ -422,9 +426,9 @@ class RouteMDP(object):
 
 
 if __name__ == "__main__":
-    initialNode = 4
-    goalNode = 7
-    mapNumber = 1
+    initialNode = 0
+    goalNode = 4
+    mapNumber = 0
     route = RouteMDP(initialNode, goalNode, mapNumber)
     route.initialize()
     route.solve()
