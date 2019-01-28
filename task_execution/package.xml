@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>task_assigner</name>
+  <name>task_execution</name>
   <version>0.0.1</version>
-  <description>A decision-making framework that assigns tasks to mobile robots.</description>
+  <description>A decision-making framework that controls a mobile robot.</description>
 
   <maintainer email="cbasich@cs.umass.edu">Connor Basich</maintainer>
   <maintainer email="jsvegliato@cs.umass.edu">Justin Svegliato</maintainer>
@@ -17,7 +17,7 @@
 
   <build_export_depend>rospy</build_export_depend>
   <build_export_depend>std_msgs</build_export_depend>
-
+  
   <exec_depend>rospy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>message_runtime</exec_depend>

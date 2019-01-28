@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(task_assigner)
+project(task_execution)
 
 find_package(catkin REQUIRED COMPONENTS
   rospy
@@ -9,8 +9,9 @@ find_package(catkin REQUIRED COMPONENTS
 
 add_message_files(
   FILES
-  TaskAssignment.msg
-  WorldState.msg
+  DeliveryMdpState.msg
+  EscortMdpState.msg
+  TaskExecutionAction.msg
 )
 
 generate_messages(
