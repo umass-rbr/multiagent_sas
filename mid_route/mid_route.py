@@ -239,8 +239,9 @@ class RouteMDP(object):
                         R[s][a] -= edgeCost
 
                 # large penalty otherwise
-                else:
+            elif action[0] not in validNodes and state[0] != self.goalNode:
                     R[s][a] -= 200
+
         return R
 
     def initialize(self):
