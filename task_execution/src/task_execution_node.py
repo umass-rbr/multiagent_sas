@@ -6,9 +6,6 @@ from mdps.escort_mdp import EscortMDP
 from task_assignment.msg import TaskAssignmentAction
 from task_execution.msg import DeliveryMdpState, EscortMdpState, TaskExecutionAction
 
-DURATION = 10
-ROBOT_ID = 42
-
 action_publisher = rospy.Publisher("task_execution/task_execution_action", TaskExecutionAction, queue_size=1)
 
 escort_mdp_state = None
@@ -33,6 +30,7 @@ def get_problem(task_type, problem):
     return False
 
 
+# TODO Parameterize the model
 def get_current_state(task_type):
     if task_type == "delivery":
         return delivery_mdp_state
@@ -43,28 +41,26 @@ def get_current_state(task_type):
     return False
 
 
-# TODO Parameterize the model
-# TODO Send details to the execute function
 # TODO Insert timeout
 # TODO Possibly change the policy?
 def execute(task_assignment):
-    rospy.loginfo("Info[task_executor.execute]: Received task assignment")
+    rospy.loginfo("Info[task_execution_node.execute]: Received a task assignment")
 
-    if task_assignment.robot_id == ROBOT_ID:
-        rospy.loginfo("Info[task_executor.execute]: Executing task assignment...")
+    if task_assignment.robot_id == rospy.get_param('robot_id'):
+        rospy.loginfo("Info[task_execution_node.execute]: Executing the task assignment...")
 
-        rospy.loginfo("Info[task_executor.execute]: Generating problem...")
+        rospy.loginfo("Info[task_execution_node.execute]: Generating the problem...")
         problem = get_problem(task_assignment.task_type, task_assignment.problem)
         if not problem:
-            rospy.logerr("Error[task_executor.execute]: Received invalid task type")
+            rospy.logerr("Error[task_execution_node.execute]: Received an invalid task assignment")
         
-        rospy.loginfo("Info[task_executor.execute]: Solving problem...")
+        rospy.loginfo("Info[task_execution_node.execute]: Solving the problem...")
         problem.initialize()
         policy, state_map, action_map = problem.solve()
         
         current_state = get_current_state(task_assignment.task_type)
         if not current_state: 
-            rospy.logerr("Error[task_executor.execute]: Received invalid task type")
+            rospy.logerr("Error[task_execution_node.execute]: Received an invalid task assignment")
 
         while not rospy.is_shutdown():
             new_state = get_current_state(task_assignment.task_type)
@@ -79,19 +75,19 @@ def execute(task_assignment):
                 rospy.loginfo(msg)
                 action_publisher.publish(msg)
 
-            rospy.sleep(DURATION)
+            rospy.sleep(rospy.get_param('duration'))
 
 
 def main():
-    rospy.init_node("task_executor", anonymous=True)
-    rospy.loginfo("Info[task_executor.main]: Instantiated the task_executor node")
+    rospy.init_node("task_execution_node", anonymous=True)
+    rospy.loginfo("Info[task_execution_node.main]: Instantiated the task_execution node")
 
     rospy.Subscriber("task_assignment/task_assignment_action", TaskAssignmentAction, execute, queue_size=1)
     rospy.Subscriber("monitor/delivery_mdp_state", DeliveryMdpState, delivery_mdp_state_callback, queue_size=1)
     rospy.Subscriber("monitor/escort_mdp_state", EscortMdpState, escort_mdp_state_callback, queue_size=1)
-    rospy.loginfo("Info[task_executor.main]: Subscribed to topics")
+    rospy.loginfo("Info[task_execution_node.main]: Subscribed to topics")
 
-    rospy.loginfo("Info[task_executor.main]: Spinning...")
+    rospy.loginfo("Info[task_execution_node.main]: Spinning...")
     rospy.spin()
 
 

@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<launch>
+  <node pkg="task_execution" type="task_execution_node" name="task_execution_node" output="screen">
+    <param name="robot_id" value="pumpkin" />
+    <param name="duration" value="10" />
+  </node>
+</launch>
