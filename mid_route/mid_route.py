@@ -59,7 +59,8 @@ class RouteMDP(object):
         self.goalNode = goalNode
         # The map of campus as a dictionary
         self.map = campus_map.generate_map(mapNumber)
-        self.obstacles = ["none", "crosswalk", "door"]
+        self.control = ["inControl", "noControl"]
+        self.tocCost = 10
 
         self.mdp = None
         self.policy = None
@@ -98,7 +99,7 @@ class RouteMDP(object):
         S = list(
             it.product(
                 list(self.map.keys()),
-                self.obstacles
+                self.control
             )
         )
 
@@ -116,7 +117,12 @@ class RouteMDP(object):
             toc -- transfer of control to deal with obstacles
         '''
 
-        A = list(self.map.keys()) + ["toc"]
+        A = list(
+            it.product(
+                list(self.map.keys()),
+                ["move", "toc"]
+            )
+        )
 
         return A
 
@@ -138,42 +144,44 @@ class RouteMDP(object):
         for s, state in enumerate(self.states):
             for a, action in enumerate(self.actions):
 
-                if state[0] == self.goalNode and state[1] == "none" and action == self.goalNode:
-                    T[s][a][s] = 1.0
+                if state[0] == self.goalNode and state[1] == "inControl":
+                    if action[0] == self.goalNode and action[1] == "move":
+                        T[s][a][s] = 1.0
 
                 # check for valid actions to nodes on map
-                validMoves = self.map[state[0]]
-                validAction = False
-                destinationNode = None
-                destinationObstacle = None
-                for destination in validMoves:
-                    # if action is valid
-                    if action == destination[0] or action == "toc":
-                        validAction = True
-                        destinationNode = destination[0]
-                        destinationObstacle = destination[2]
+                validEdges = self.map[state[0]]
+                validNodes = [edge[0] for edge in validEdges]
 
-                if validAction is True:
+                # if valid action
+                if action[0] in validNodes and state[0] != self.goalNode:
 
-                    for sp, statePrime in enumerate(self.states):
-                        S[s][a][sp] = sp
-                        T[s][a][sp] = 0.0
+                    # the obstacle associated with the edge on map
+                    edgeObstacle = validEdges[validNodes.index(action[0])][2]
 
-                        if state[0] != self.goalNode:
+                    # no obstacle exists
+                    if edgeObstacle == "none":
 
-                            # transition with no obstacle
-                            if destinationObstacle == "none" and state[1] == "none" and action == destinationNode:
-                                if statePrime[0] == destinationNode and statePrime[1] == "none":
+                        for sp, statePrime in enumerate(self.states):
+                            S[s][a][sp] = sp
+
+                            if state[1] == "inControl" and action[1] == "move":
+                                if statePrime[0] == action[0] and statePrime[1] == "inControl":
                                     T[s][a][sp] = 1.0
 
-                            # transition into TOC state to deal with obstacle
-                            if destinationObstacle != "none" and state[1] == "none" and action == "toc":
-                                if statePrime[0] == state[0] and statePrime[1] == destinationObstacle:
+                    # an obstacle exists
+                    elif edgeObstacle != "none":
+                        
+                        for sp, statePrime in enumerate(self.states):
+                            S[s][a][sp] = sp
+
+                            # transitioning to toc state
+                            if state[1] == "inControl" and action[1] == "toc":
+                                if statePrime[0] == state[0] and statePrime[1] == "noControl":
                                     T[s][a][sp] = 1.0
 
-                            # transition out of TOC state from obstacle
-                            if destinationObstacle != "none" and state[1] == destinationObstacle and action == destinationNode:
-                                if statePrime[0] == destinationNode and statePrime[1] == "none":
+                            # transitioning from toc state to next node on map
+                            if state[1] == "noControl" and action[1] == "move":
+                                if statePrime[0] == action[0] and statePrime[1] == "inControl":
                                     T[s][a][sp] = 1.0
 
                 # TODO: Check if T sums to 1.
@@ -199,22 +207,32 @@ class RouteMDP(object):
         for s, state in enumerate(self.states):
             for a, action in enumerate(self.actions):
 
-                # check valid actions on map
-                validActions = list(x[0] for x in self.map[state[0]])
-                validActionsCost = list(y[1] for y in self.map[state[0]])
+                # state with goal node is the terminal state
+                if state[0] == self.goalNode and state[1] == "inControl":
+                    if action[0] == self.goalNode and action[1] == "move":
+                        R[s][a] -= 0
 
-                # goal node stays in its own state
-                if state[0] == self.goalNode and action == self.goalNode and state[1] is "none":
-                    # state with goal node is the terminal state
-                    R[s][a] += 1
+                # check for valid actions to nodes on map
+                validEdges = self.map[state[0]]
+                validNodes = [edge[0] for edge in validEdges]
 
-                # cost for transitioning to toc state
-                elif action is "toc" and state[1] is "none":
-                    R[s][a] -= 10
+                # if valid action
+                if action[0] in validNodes and state[0] != self.goalNode:
 
-                # cost for normal transitions
-                elif action in validActions:
-                    R[s][a] -= validActionsCost[validActions.index(action)]
+                    # the cost associated with the edge on map
+                    edgeCost = validEdges[validNodes.index(action[0])][1]
+
+                    # cost for normal move
+                    if state[1] == "inControl" and action[1] == "move":
+                        R[s][a] -= edgeCost
+
+                    # cost for transitioning into toc state
+                    elif state[1] == "inControl" and action[1] == "toc":
+                        R[s][a] -= self.tocCost
+
+                    # cost for transitioning out of toc state
+                    elif state[1] == "noControl" and action[1] == "move":
+                        R[s][a] -= edgeCost
 
                 # large penalty otherwise
                 else:
@@ -303,7 +321,7 @@ class RouteMDP(object):
         #self.currentState = rnd.randint(1, len(self.states) - 1)
 
         # Always initalize to the active tasks: Clean and Medicate.
-        self.currentState = self.states.index((self.initialNode, "none"))
+        self.currentState = self.states.index((self.initialNode, "inControl"))
 
     def execute_get_state(self):
         """ During execution, get the current state.
@@ -404,9 +422,9 @@ class RouteMDP(object):
 
 
 if __name__ == "__main__":
-    initialNode = 0
-    goalNode = 4
-    mapNumber = 0
+    initialNode = 4
+    goalNode = 7
+    mapNumber = 1
     route = RouteMDP(initialNode, goalNode, mapNumber)
     route.initialize()
     route.solve()
