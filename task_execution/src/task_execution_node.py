@@ -20,6 +20,7 @@ def delivery_mdp_state_callback(state):
     delivery_mdp_state = state
 
 
+# TODO Parameterize the model
 def get_problem(task_type, problem):
     if task_type == "delivery":
         return DeliveryMDP(problem)
@@ -30,7 +31,6 @@ def get_problem(task_type, problem):
     return False
 
 
-# TODO Parameterize the model
 def get_current_state(task_type):
     if task_type == "delivery":
         return delivery_mdp_state
@@ -41,20 +41,15 @@ def get_current_state(task_type):
     return False
 
 
-# TODO Insert timeout
-# TODO Possibly change the policy?
 def execute(task_assignment):
     rospy.loginfo("Info[task_execution_node.execute]: Received a task assignment")
 
-    if task_assignment.robot_id == rospy.get_param('robot_id'):
-        rospy.loginfo("Info[task_execution_node.execute]: Executing the task assignment...")
-
-        rospy.loginfo("Info[task_execution_node.execute]: Generating the problem...")
+    robot_id = rospy.get_param('robot_id')
+    if task_assignment.robot_id == robot_id:
         problem = get_problem(task_assignment.task_type, task_assignment.problem)
         if not problem:
             rospy.logerr("Error[task_execution_node.execute]: Received an invalid task assignment")
         
-        rospy.loginfo("Info[task_execution_node.execute]: Solving the problem...")
         problem.initialize()
         policy, state_map, action_map = problem.solve()
         
@@ -75,7 +70,8 @@ def execute(task_assignment):
                 rospy.loginfo(msg)
                 action_publisher.publish(msg)
 
-            rospy.sleep(rospy.get_param('duration'))
+            duration = rospy.get_param('duration')
+            rospy.sleep(duration)
 
 
 def main():
@@ -85,9 +81,7 @@ def main():
     rospy.Subscriber("task_assignment/task_assignment_action", TaskAssignmentAction, execute, queue_size=1)
     rospy.Subscriber("monitor/delivery_mdp_state", DeliveryMdpState, delivery_mdp_state_callback, queue_size=1)
     rospy.Subscriber("monitor/escort_mdp_state", EscortMdpState, escort_mdp_state_callback, queue_size=1)
-    rospy.loginfo("Info[task_execution_node.main]: Subscribed to topics")
 
-    rospy.loginfo("Info[task_execution_node.main]: Spinning...")
     rospy.spin()
 
 
