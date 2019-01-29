@@ -6,6 +6,9 @@ from mdps.escort_mdp import EscortMDP
 from task_assignment.msg import TaskAssignmentAction
 from task_execution.msg import DeliveryMdpState, EscortMdpState, TaskExecutionAction
 
+ROBOT_ID = rospy.get_param('robot_id')
+DURATION = rospy.get_param('duration')
+
 action_publisher = rospy.Publisher("task_execution/task_execution_action", TaskExecutionAction, queue_size=1)
 
 escort_mdp_state = None
@@ -20,7 +23,7 @@ def delivery_mdp_state_callback(state):
     delivery_mdp_state = state
 
 
-# TODO Parameterize the model
+# TODO Parameterize each model
 def get_problem(task_type, problem):
     if task_type == "delivery":
         return DeliveryMDP(problem)
@@ -44,8 +47,7 @@ def get_current_state(task_type):
 def execute(task_assignment):
     rospy.loginfo("Info[task_execution_node.execute]: Received a task assignment")
 
-    robot_id = rospy.get_param('robot_id')
-    if task_assignment.robot_id == robot_id:
+    if task_assignment.robot_id == ROBOT_ID:
         problem = get_problem(task_assignment.task_type, task_assignment.problem)
         if not problem:
             rospy.logerr("Error[task_execution_node.execute]: Received an invalid task assignment")
@@ -70,8 +72,7 @@ def execute(task_assignment):
                 rospy.loginfo(msg)
                 action_publisher.publish(msg)
 
-            duration = rospy.get_param('duration')
-            rospy.sleep(duration)
+            rospy.sleep(DURATION)
 
 
 def main():
