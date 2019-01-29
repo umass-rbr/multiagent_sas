@@ -167,6 +167,10 @@ class RouteMDP(object):
                             if state[1] == "inControl" and action[1] == "move":
                                 if statePrime[0] == action[0] and statePrime[1] == "inControl":
                                     T[s][a][sp] = 1.0
+                            elif state[1] == "inControl" and action[1] == "toc":
+                                T[s][a][s] = 1.0
+                            elif state[1] == "noControl":
+                                T[s][a][s] = 1.0
 
                     # an obstacle exists
                     elif edgeObstacle != "none":
@@ -178,12 +182,15 @@ class RouteMDP(object):
                             if state[1] == "inControl" and action[1] == "toc":
                                 if statePrime[0] == state[0] and statePrime[1] == "noControl":
                                     T[s][a][sp] = 1.0
+                            elif state[1] == "inControl" and action[1] == "move":
+                                T[s][a][s] = 1.0
 
                             # transitioning from toc state to next node on map
                             if state[1] == "noControl" and action[1] == "move":
                                 if statePrime[0] == action[0] and statePrime[1] == "inControl":
                                     T[s][a][sp] = 1.0
-
+                            elif state[1] == "noControl" and action[1] == "toc":
+                                T[s][a][s] = 1.0
                 else:
                     T[s][a][s] = 1.0
 
@@ -211,36 +218,32 @@ class RouteMDP(object):
         for s, state in enumerate(self.states):
             for a, action in enumerate(self.actions):
 
-                # state with goal node is the terminal state
-                if state[0] == self.goalNode and state[1] == "inControl":
-                    if action[0] == self.goalNode and action[1] == "move":
-                        R[s][a] -= 0
-
-                # check for valid actions to nodes on map
+                # check for valid edges to nodes on map
                 validEdges = self.map[state[0]]
                 validNodes = [edge[0] for edge in validEdges]
 
-                # if valid action
-                if action[0] in validNodes and state[0] != self.goalNode:
+                # the costs associated with the edge on map
+                edgeCosts = [edge[1] for edge in validEdges]
 
-                    # the cost associated with the edge on map
-                    edgeCost = validEdges[validNodes.index(action[0])][1]
+                # state with goal node is the terminal state
+                if state[0] == self.goalNode and state[1] == "inControl" and action[0] == self.goalNode and action[1] == "move":
+                    R[s][a] -= 0.0
 
-                    # cost for normal move
-                    if state[1] == "inControl" and action[1] == "move":
-                        R[s][a] -= edgeCost
+                # cost for normal move
+                elif action[0] in validNodes and state[0] != self.goalNode and state[1] == "inControl" and action[1] == "move": 
+                    R[s][a] -= edgeCosts[validNodes.index(action[0])]
 
-                    # cost for transitioning into toc state
-                    elif state[1] == "inControl" and action[1] == "toc":
-                        R[s][a] -= self.tocCost
+                # cost for transitioning into toc state
+                elif action[0] in validNodes and state[0] != self.goalNode and state[1] == "inControl" and action[1] == "toc":
+                    R[s][a] -= self.tocCost
 
-                    # cost for transitioning out of toc state
-                    elif state[1] == "noControl" and action[1] == "move":
-                        R[s][a] -= edgeCost
+                # cost for transitioning out of toc state
+                elif action[0] in validNodes and state[0] != self.goalNode and state[1] == "noControl" and action[1] == "move":
+                    R[s][a] -= edgeCosts[validNodes.index(action[0])]
 
                 # large penalty otherwise
-            elif action[0] not in validNodes and state[0] != self.goalNode:
-                    R[s][a] -= 200
+                else:
+                   R[s][a] -= 200
 
         return R
 
