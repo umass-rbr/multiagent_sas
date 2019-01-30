@@ -6,30 +6,36 @@ from mdps.escort_mdp import EscortMDP
 from task_assignment.msg import TaskAssignmentAction
 from task_execution.msg import DeliveryMdpState, EscortMdpState, TaskExecutionAction
 
-ROBOT_ID = rospy.get_param('robot_id')
-DURATION = rospy.get_param('duration')
-
 action_publisher = rospy.Publisher("task_execution/task_execution_action", TaskExecutionAction, queue_size=1)
 
-escort_mdp_state = None
 delivery_mdp_state = None
-
-
-def escort_mdp_state_callback(state):
-    escort_mdp_state = state
+escort_mdp_state = None
 
 
 def delivery_mdp_state_callback(state):
     delivery_mdp_state = state
 
 
-# TODO Parameterize each model
-def get_problem(task_type, problem):
+def escort_mdp_state_callback(state):
+    escort_mdp_state = state
+
+
+def get_problem(task_type, task_data, map):
     if task_type == "delivery":
-        return DeliveryMDP(problem)
+        return DeliveryMDP(map, task_data.start_location, task_data.end_location)
 
     if task_type == "escort":
-        return EscortMDP(problem)
+        return EscortMDP(map, task_data.start_location, task_data.end_location)
+
+    return False
+
+
+def get_solution(task_type, problem):
+    if task_type == "delivery":
+        return problem.solve()
+
+    if task_type == "escort":
+        return problem.solve()
 
     return False
 
@@ -47,13 +53,19 @@ def get_current_state(task_type):
 def execute(task_assignment):
     rospy.loginfo("Info[task_execution_node.execute]: Received a task assignment")
 
-    if task_assignment.robot_id == ROBOT_ID:
-        problem = get_problem(task_assignment.task_type, task_assignment.problem)
+    robot_id = rospy.get_param('/task_execution_node/robot_id')
+    if task_assignment.robot_id == robot_id:
+        map = # call map service here
+
+        problem = get_problem(task_assignment.task_type, task_assignment.task_data, map)
         if not problem:
             rospy.logerr("Error[task_execution_node.execute]: Received an invalid task assignment")
         
-        problem.initialize()
-        policy, state_map, action_map = problem.solve()
+        solution = problem.solve()
+
+        state_map = solution["state_map"]
+        action_map = solution["action_map"]
+        policy = solution["policy"]
         
         current_state = get_current_state(task_assignment.task_type)
         if not current_state: 
@@ -72,7 +84,8 @@ def execute(task_assignment):
                 rospy.loginfo(msg)
                 action_publisher.publish(msg)
 
-            rospy.sleep(DURATION)
+            duration = rospy.get_param('/task_execution_node/duration')
+            rospy.sleep(duration)
 
 
 def main():
