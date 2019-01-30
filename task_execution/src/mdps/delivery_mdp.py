@@ -12,6 +12,9 @@ from nova.mdp_value_function import MDPValueFunction
 from nova.mdp_vi import MDPVI
 
 
+# TODO Make sure nova works
+# TODO Implement a pretty print function
+# TODO Make sure the getters work properly
 class DeliveryMDP(object):
     def __init__(self, map, start_location, end_location):
         self.map = map
@@ -96,6 +99,9 @@ class DeliveryMDP(object):
                         R[s][a] = path_cost
 
         return R
+
+    def _get_name(self):
+        return "delivery-{}-{}-{}".format(self.map.name, self.start_location, self.end_location)
 
     def _get_policy(self):
         policy = {}

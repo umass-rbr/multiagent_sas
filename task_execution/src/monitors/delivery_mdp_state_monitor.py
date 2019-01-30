@@ -3,7 +3,8 @@ import rospy
 
 from task_execution.msg import DeliveryMdpState
 
-    
+
+# TODO Implement a location monitor    
 def get_current_location():
     return "shlomoOffice"
 

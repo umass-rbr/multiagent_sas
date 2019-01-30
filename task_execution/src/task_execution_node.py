@@ -20,6 +20,17 @@ def escort_mdp_state_callback(state):
     escort_mdp_state = state
 
 
+# TODO Implement a simple map server
+def get_map(task_data):
+    rospy.wait_for_service('get_map')
+    try:
+        get_map = rospy.ServiceProxy('get_map', GetMap)
+        res = get_map(task_data.map_name)
+        return res
+    except rospy.ServiceException, e:
+        rospy.logerr("Error[task_execution_node.get_map]: Failed to request map")
+
+
 def get_problem(task_type, task_data, map):
     if task_type == "delivery":
         return DeliveryMDP(map, task_data.start_location, task_data.end_location)
@@ -30,6 +41,7 @@ def get_problem(task_type, task_data, map):
     return False
 
 
+# TODO Retrieve the solution from a file if available
 def get_solution(task_type, problem):
     if task_type == "delivery":
         return problem.solve()
@@ -50,18 +62,23 @@ def get_current_state(task_type):
     return False
 
 
+# TODO Get a location name from the policy
+# TODO Should the task_assignment object be passed to all functions instead?
+# TODO Break out of the code when a failure occurs 
 def execute(task_assignment):
     rospy.loginfo("Info[task_execution_node.execute]: Received a task assignment")
 
     robot_id = rospy.get_param('/task_execution_node/robot_id')
     if task_assignment.robot_id == robot_id:
-        map = # call map service here
+        map = get_map(task_assignment.task_data)
 
         problem = get_problem(task_assignment.task_type, task_assignment.task_data, map)
         if not problem:
             rospy.logerr("Error[task_execution_node.execute]: Received an invalid task assignment")
         
         solution = problem.solve()
+        if not solution:
+            rospy.logerr("Error[task_execution_node.execute]: Received an invalid task assignment")
 
         state_map = solution["state_map"]
         action_map = solution["action_map"]
@@ -79,7 +96,9 @@ def execute(task_assignment):
                 current_action = action_map[policy[state_map[current_state]]]
 
                 msg = TaskExecutionAction()
-                msg.action = current_action
+                msg.x = map[current_action]["position"]["x"]
+                msg.y = map[current_action]["position"]["y"]
+                msg.theta = map[current_action]["position"]["theta"]
 
                 rospy.loginfo(msg)
                 action_publisher.publish(msg)
@@ -88,6 +107,9 @@ def execute(task_assignment):
             rospy.sleep(duration)
 
 
+# TODO Separate monitoring code into another file
+# TODO Rename everything across all files
+# TODO Ensure that task_assigner code is working properly
 def main():
     rospy.init_node("task_execution_node", anonymous=True)
     rospy.loginfo("Info[task_execution_node.main]: Instantiated the task_execution node")
