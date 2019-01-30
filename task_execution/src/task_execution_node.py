@@ -10,7 +10,7 @@ from task_execution.msg import DeliveryMdpState, EscortMdpState, TaskExecutionAc
 
 action_publisher = rospy.Publisher("task_execution/task_execution_action", TaskExecutionAction, queue_size=1)
 
-delivery_mdp_state = ("shlomoOffice", 0)
+delivery_mdp_state = None
 escort_mdp_state = None
 
 
