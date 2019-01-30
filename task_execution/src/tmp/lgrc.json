@@ -1,0 +1,42 @@
+{
+    "locations": {
+        "shlomoOffice": {
+            "name": "Shlomo's Office",
+            "position": {
+                "x": 0, 
+                "y": 0
+            }
+        },
+        "amrl": {
+            "name": "AMRL", 
+            "position": {
+                "x": 5,
+                "y": 5
+            }
+        },
+        "mailroom": {
+            "name": "Mailroom", 
+            "position": {
+                "x": 10,
+                "y": 10
+            }
+        }
+    },
+    "paths": {
+        "shlomoOffice": {
+            "shlomoOffice": 0,
+            "amrl": 25,
+            "mailroom": 37
+        },
+        "amrl": {
+            "shlomoOffice": 0,
+            "amrl": 25,
+            "mailroom": 37
+        },
+        "mailroom": {
+            "shlomoOffice": 0,
+            "amrl": 25,
+            "mailroom": 37
+        }
+    }
+}

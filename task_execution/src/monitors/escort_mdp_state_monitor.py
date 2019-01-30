@@ -4,7 +4,7 @@ import rospy
 from task_execution.msg import EscortMdpState
 
 
-# TODO Implement a location monitor
+# TODO Implement a way to a get a location
 def get_current_location():
     return True
 

@@ -5,7 +5,7 @@ import sys
 import numpy as np
 
 current_file_path = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(current_file_path, "..", "..", "nova", "python"))
+sys.path.append(os.path.join(current_file_path, "..", "..", "..", "..", "..", "nova", "python"))
 
 from nova.mdp import MDP
 from nova.mdp_value_function import MDPValueFunction
@@ -15,7 +15,7 @@ from nova.mdp_vi import MDPVI
 # TODO Make sure nova works
 # TODO Implement a pretty print function
 # TODO Make sure the getters work properly
-class DeliveryMDP(object):
+class EscortMDP(object):
     def __init__(self, map, start_location, end_location):
         self.map = map
         self.start_location = start_location

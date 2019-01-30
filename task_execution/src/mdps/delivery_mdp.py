@@ -5,7 +5,7 @@ import sys
 import numpy as np
 
 current_file_path = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(current_file_path, "..", "..", "nova", "python"))
+sys.path.append(os.path.join(current_file_path, "..", "..", "..", "..", "..", "nova", "python"))
 
 from nova.mdp import MDP
 from nova.mdp_value_function import MDPValueFunction
@@ -22,6 +22,7 @@ class DeliveryMDP(object):
         self.end_location = end_location
 
         self.mdp = None
+        self.H = 4
 
         self._initialize()
 
@@ -57,7 +58,7 @@ class DeliveryMDP(object):
         return [(location, has_package) for location in location_states for has_package in has_package_states]
 
     def _compute_actions(self):
-        return self.map["locations"].keys().append("pickup")
+        return self.map["locations"].keys() + ["pickup"]
 
     def _compute_state_transitions(self):
         S = [[[-1 for sp in range(self.mdp.ns)] for a in range(self.mdp.m)] for s in range(self.mdp.n)]
