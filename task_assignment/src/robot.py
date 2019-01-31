@@ -23,6 +23,9 @@ class Robot():
         return 0
 
     def calculate_time(self, l1, l2):
+        l1 = int(l1)
+        l2 = int(l2)
+
         # Inside robot
         if self.r_type == 0:
             if campus_map.get_building(l1) != campus_map.get_building(l2):
