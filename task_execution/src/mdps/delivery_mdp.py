@@ -18,6 +18,8 @@ class DeliveryMDP(object):
         self.map = map
         self.start_location = start_location
         self.end_location = end_location
+
+        self.name = "delivery-mdp-{}-{}-{}".format(self.map["name"], self.start_location, self.end_location)
         
         self._initialize()
 
@@ -96,10 +98,13 @@ class DeliveryMDP(object):
 
         return R
 
-    def _get_name(self):
-        return "delivery-{}-{}-{}".format(self.map.name, self.start_location, self.end_location)
+    def _generate_state_map(self):
+        return {state: s for s, state in enumerate(self.states)}
 
-    def _get_policy(self):
+    def _generate_action_map(self):
+        return {a: action for a, action in enumerate(self.actions)}
+
+    def _generate_policy(self):
         policy = {}
 
         algorithm = MDPVI(self.mdp)
@@ -117,15 +122,9 @@ class DeliveryMDP(object):
 
         return policy
 
-    def _get_state_map(self):
-        return {state: s for s, state in enumerate(self.states)}
-
-    def _get_action_map(self):
-        return {a: action for a, action in enumerate(self.actions)}
-
     def solve(self):
         return {
-            "state_map": self._get_state_map(),
-            "action_map": self._get_action_map(),
-            "policy": self._get_policy()
+            "state_map": self._generate_state_map(),
+            "action_map": self._generate_action_map(),
+            "policy": self._generate_policy()
         }

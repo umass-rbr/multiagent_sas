@@ -1,4 +1,4 @@
-import ctypes as ct
+import ctypes
 import os
 import sys
 
@@ -12,17 +12,15 @@ from nova.mdp_value_function import MDPValueFunction
 from nova.mdp_vi import MDPVI
 
 
-# TODO Make sure nova works
 # TODO Implement a pretty print function
-# TODO Make sure the getters work properly
 class EscortMDP(object):
     def __init__(self, map, start_location, end_location):
         self.map = map
         self.start_location = start_location
         self.end_location = end_location
 
-        self.mdp = None
-
+        self.name = "escort-mdp-{}-{}-{}".format(self.map["name"], self.start_location, self.end_location)
+        
         self._initialize()
 
     def _initialize(self):
@@ -34,19 +32,19 @@ class EscortMDP(object):
         self.mdp.ns = len(self.states)
         self.mdp.m = len(self.actions)
         self.mdp.gamma = 0.99
-        self.mdp.horizon = int(self.H)
+        self.mdp.horizon = 4
         self.mdp.epsilon = 0.001
-        self.mdp.s0 = int(self.mdp.n / (self.H + 1) - 1)
+        self.mdp.s0 = int(self.mdp.n / (self.mdp.horizon + 1) - 1)
         self.mdp.ng = 0
 
-        S, self.T = self._compute_state_transitions()
-        array_type_nmns_int = ct.c_int * (self.mdp.n * self.mdp.m * self.mdp.ns)
-        array_type_nmns_float = ct.c_float * (self.mdp.n * self.mdp.m * self.mdp.ns)
+        S, T = self._compute_state_transitions()
+        array_type_nmns_int = ctypes.c_int * (self.mdp.n * self.mdp.m * self.mdp.ns)
+        array_type_nmns_float = ctypes.c_float * (self.mdp.n * self.mdp.m * self.mdp.ns)
         self.mdp.S = array_type_nmns_int(*np.array(S).flatten())
-        self.mdp.T = array_type_nmns_float(*np.array(self.T).flatten())
+        self.mdp.T = array_type_nmns_float(*np.array(T).flatten())
 
-        R = self._compute_rewards(self.T)
-        array_type_nm_float = ct.c_float * (self.mdp.n * self.mdp.m)
+        R = self._compute_rewards()
+        array_type_nm_float = ctypes.c_float * (self.mdp.n * self.mdp.m)
         self.mdp.R = array_type_nm_float(*np.array(R).flatten())
         self.mdp.Rmax = float(np.array(R).max())
         self.mdp.Rmin = float(np.array(R).min())
@@ -57,7 +55,7 @@ class EscortMDP(object):
         return [(location, has_package) for location in location_states for has_package in has_package_states]
 
     def _compute_actions(self):
-        return self.map["locations"].keys().append("pickup")
+        return self.map["locations"].keys() + ["pickup"]
 
     def _compute_state_transitions(self):
         S = [[[-1 for sp in range(self.mdp.ns)] for a in range(self.mdp.m)] for s in range(self.mdp.n)]
@@ -83,7 +81,7 @@ class EscortMDP(object):
 
         return S, T
 
-    def _compute_rewards(self, T):
+    def _compute_rewards(self):
         R = [[0.0 for a in range(self.mdp.m)] for s in range(self.mdp.n)]
 
         for s, state in enumerate(self.states):
@@ -100,10 +98,13 @@ class EscortMDP(object):
 
         return R
 
-    def _get_name(self):
-        return "escort-{}-{}-{}".format(self.map.name, self.start_location, self.end_location)
+    def _generate_state_map(self):
+        return {state: s for s, state in enumerate(self.states)}
 
-    def _get_policy(self):
+    def _generate_action_map(self):
+        return {a: action for a, action in enumerate(self.actions)}
+
+    def _generate_policy(self):
         policy = {}
 
         algorithm = MDPVI(self.mdp)
@@ -116,32 +117,14 @@ class EscortMDP(object):
         policy_as_list = policy_as_string.split(" ")
         policy_as_list = [c for c in policy_as_list if c]
 
-        for s in range(len(self.states)):
-            policy[str(s)] = policy_as_list[s]
+        for index in range(len(self.states)):
+            policy[index] = int(policy_as_list[index])
 
         return policy
 
-    def _get_state_map(self):
-        state_map = {}
-
-        for s in range(len(self.states)):
-            key = str(self.states[s])
-            state_map[key] = str(s)
-        
-        return state_map
-
-    def _get_action_map(self):
-        action_map = {}
-
-        for a in range(len(self.actions)):
-            key = str(self.actions[a])
-            action_map[key] = str(a)
-            
-        return action_map
-
     def solve(self):
         return {
-            "state_map": self._get_state_map(),
-            "action_map": self._get_action_map(),
-            "policy": self._get_policy(), 
+            "state_map": self._generate_state_map(),
+            "action_map": self._generate_action_map(),
+            "policy": self._generate_policy()
         }

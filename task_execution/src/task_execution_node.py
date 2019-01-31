@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import json
+import os
 
 import rospy
 
-from mdps.delivery_mdp import DeliveryMDP
-from mdps.escort_mdp import EscortMDP
+from task_handler import DeliveryTaskHandler, EscortTaskHandler
 from task_assignment.msg import TaskAssignmentAction
 from task_execution.msg import DeliveryMdpState, EscortMdpState, TaskExecutionAction
 
@@ -12,28 +12,27 @@ PUBLISHER = rospy.Publisher("task_execution/task_execution_action", TaskExecutio
 
 TASK_MAP = {
     "delivery": {
-        "problem": lambda map, task_data: DeliveryMDP(map, task_data["start_location"], task_data["end_location"]),
-        "solution": lambda problem: problem.solve(),
-        "state": lambda: delivery_mdp_state
+        "task_handler": DeliveryTaskHandler(),
+        "message_selector": lambda: delivery_mdp_state_message
     },
     "escort": {
-        "problem": lambda map, task_data: EscortMDP(map, task_data["start_location"], task_data["end_location"]),
-        "solution": lambda problem: problem.solve(),
-        "state": lambda: escort_mdp_state
+        "task_handler": EscortTaskHandler(),
+        "message_selector": lambda: escort_mdp_state_message
     }
 }
 
-delivery_mdp_state = None
-escort_mdp_state = None
-
-def delivery_mdp_state_callback(state):
-    global delivery_mdp_state
-    delivery_mdp_state = (state.location, state.has_package)
+delivery_mdp_state_message = None
+escort_mdp_state_message = None
 
 
-def escort_mdp_state_callback(state):
-    global escort_mdp_state
-    escort_mdp_state = (state.location, state.with_person)
+def delivery_mdp_state_callback(message):
+    global delivery_mdp_state_message
+    delivery_mdp_state_message = message
+
+
+def escort_mdp_state_callback(message):
+    global escort_mdp_state_message
+    escort_mdp_state_message = message
 
 
 def get_map(task_assignment):
@@ -44,56 +43,55 @@ def get_map(task_assignment):
 def execute(task_assignment):
     rospy.loginfo("Info[task_execution_node.execute]: Received a task assignment: %s", task_assignment)
 
-    try:
-        robot_id = rospy.get_param('/task_execution_node/robot_id')
-        wait_duration = rospy.get_param('/task_execution_node/wait_duration')
-        timeout_duration = rospy.get_param('/task_execution_node/timeout_duration')
+    activation_time = rospy.Time.now()
 
-        if task_assignment.robot_id == robot_id:
-            rospy.loginfo("Info[task_execution_node.execute]: Retrieving the map...")
-            map = get_map(task_assignment)
+    robot_id = rospy.get_param('/task_execution_node/robot_id')
+    wait_duration = rospy.get_param('/task_execution_node/wait_duration')
+    timeout_duration = rospy.get_param('/task_execution_node/timeout_duration')
 
-            rospy.loginfo("Info[task_execution_node.execute]: Generating the problem...")
-            task_data = json.loads(task_assignment.task_data)
-            problem = TASK_MAP[task_assignment.task_type]["problem"](map, task_data)
-            
-            rospy.loginfo("Info[task_execution_node.execute]: Solving the problem...")
-            solution = TASK_MAP[task_assignment.task_type]["solution"](problem)
+    if task_assignment.robot_id == robot_id:
+        rospy.loginfo("Info[task_execution_node.execute]: Retrieving the map...")
+        map = get_map(task_assignment)
 
-            state_map = solution["state_map"]
-            action_map = solution["action_map"]
-            policy = solution["policy"]
-
-            activation_time = rospy.Time.now()
-
-            current_state = None
-            
-            while not rospy.is_shutdown():
-                rospy.loginfo("Info[task_execution_node.execute]: Getting the current state...")
-                new_state = TASK_MAP[task_assignment.task_type]["state"]()
-
-                if new_state != current_state:
-                    current_state = new_state
+        rospy.loginfo("Info[task_execution_node.execute]: Generating the problem...")
+        problem = TASK_MAP[task_assignment.task_type]["task_handler"].get_problem(map, json.loads(task_assignment.task_data))
                     
-                    state_index = state_map[current_state]
-                    action_index = policy[state_index]
-                    current_action = action_map[action_index]
+        rospy.loginfo("Info[task_execution_node.execute]: Solving the problem...")
+        solution = TASK_MAP[task_assignment.task_type]["task_handler"].get_solution(problem)
 
-                    msg = TaskExecutionAction()
-                    msg.x = map["locations"][current_action]["position"]["x"]
-                    msg.y = map["locations"][current_action]["position"]["y"]
-                    msg.theta = map["locations"][current_action]["position"]["theta"]
+        state_map = solution["state_map"]
+        action_map = solution["action_map"]
+        policy = solution["policy"]
 
-                    rospy.loginfo("Info[task_execution_node.execute]: Publishing an action: %s", msg)
-                    PUBLISHER.publish(msg)
+        current_state = None
+        
+        while not rospy.is_shutdown():
+            rospy.loginfo("Info[task_execution_node.execute]: Retrieving the current state...")
+            state_message = TASK_MAP[task_assignment.task_type]["message_selector"]()
+            new_state = TASK_MAP[task_assignment.task_type]["task_handler"].get_state(state_message)
+
+            if new_state != current_state:
+                current_state = new_state
                 
-                current_time = rospy.Time.now()
-                if current_time - activation_time > rospy.Duration(timeout_duration):
-                    raise RuntimeError("Exceeded the time limit to execute the task")
+                state_index = state_map[current_state]
+                action_index = policy[state_index]
+                current_action = action_map[action_index]
 
-                rospy.sleep(wait_duration)
-    except Exception as e:
-        rospy.logerr("Error[task_execution_node.execute]: Encountered an exception while executing the task: %s", e)
+                action_message = TaskExecutionAction()
+                action_message.header.stamp = rospy.Time.now()
+                action_message.header.frame_id = "/task_execution_node"
+                action_message.x = map["locations"][current_action]["position"]["x"]
+                action_message.y = map["locations"][current_action]["position"]["y"]
+                action_message.theta = map["locations"][current_action]["position"]["theta"]
+
+                rospy.loginfo("Info[task_execution_node.execute]: Publishing the action: %s", action_message)
+                PUBLISHER.publish(action_message)
+            
+            current_time = rospy.Time.now()
+            if current_time - activation_time > rospy.Duration(timeout_duration):
+                raise RuntimeError("Exceeded the time limit to execute the task")
+
+            rospy.sleep(wait_duration)
 
 
 # TODO Implement the request to the map service
@@ -106,6 +104,7 @@ def main():
     rospy.Subscriber("monitor/escort_mdp_state", EscortMdpState, escort_mdp_state_callback, queue_size=1)
     rospy.Subscriber("task_assignment/task_assignment_action", TaskAssignmentAction, execute, queue_size=1)
 
+    rospy.loginfo("Info[task_execution_node.main]: Spinning...")
     rospy.spin()
 
 
