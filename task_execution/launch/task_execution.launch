@@ -2,13 +2,15 @@
 <launch>
   <node pkg="task_execution" type="task_execution_node.py" name="task_execution_node" output="screen">
     <param name="robot_id" value="pumpkin" />
-    <param name="duration" value="15" />
+    <param name="wait_duration" value="1" />
+    <param name="timeout_duration" value="10" />
   </node>
 
-  <group ns="monitor">
+  <node pkg="task_execution" type="delivery_mdp_state_monitor.py" name="delivery_mdp_state_monitor">
     <param name="rate" value="10" />
-
-    <node pkg="task_execution" type="delivery_mdp_state_monitor.py" name="delivery_mdp_state_monitor" />
-    <node pkg="task_execution" type="escort_mdp_state_monitor.py" name="escort_mdp_state_monitor" />
-  </group>
+  </node>
+  
+  <node pkg="task_execution" type="escort_mdp_state_monitor.py" name="escort_mdp_state_monitor">
+    <param name="rate" value="10" />
+  </node>
 </launch>

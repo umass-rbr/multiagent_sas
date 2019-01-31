@@ -1,5 +1,4 @@
-import ast
-import ctypes as ct
+import ctypes
 import os
 import sys
 
@@ -13,18 +12,13 @@ from nova.mdp_value_function import MDPValueFunction
 from nova.mdp_vi import MDPVI
 
 
-# TODO Make sure nova works
 # TODO Implement a pretty print function
-# TODO Make sure the getters work properly
 class DeliveryMDP(object):
     def __init__(self, map, start_location, end_location):
         self.map = map
         self.start_location = start_location
         self.end_location = end_location
-
-        self.mdp = None
-        self.H = 4
-
+        
         self._initialize()
 
     def _initialize(self):
@@ -36,19 +30,19 @@ class DeliveryMDP(object):
         self.mdp.ns = len(self.states)
         self.mdp.m = len(self.actions)
         self.mdp.gamma = 0.99
-        self.mdp.horizon = int(self.H)
+        self.mdp.horizon = 4
         self.mdp.epsilon = 0.001
-        self.mdp.s0 = int(self.mdp.n / (self.H + 1) - 1)
+        self.mdp.s0 = int(self.mdp.n / (self.mdp.horizon + 1) - 1)
         self.mdp.ng = 0
 
-        S, self.T = self._compute_state_transitions()
-        array_type_nmns_int = ct.c_int * (self.mdp.n * self.mdp.m * self.mdp.ns)
-        array_type_nmns_float = ct.c_float * (self.mdp.n * self.mdp.m * self.mdp.ns)
+        S, T = self._compute_state_transitions()
+        array_type_nmns_int = ctypes.c_int * (self.mdp.n * self.mdp.m * self.mdp.ns)
+        array_type_nmns_float = ctypes.c_float * (self.mdp.n * self.mdp.m * self.mdp.ns)
         self.mdp.S = array_type_nmns_int(*np.array(S).flatten())
-        self.mdp.T = array_type_nmns_float(*np.array(self.T).flatten())
+        self.mdp.T = array_type_nmns_float(*np.array(T).flatten())
 
-        R = self._compute_rewards(self.T)
-        array_type_nm_float = ct.c_float * (self.mdp.n * self.mdp.m)
+        R = self._compute_rewards()
+        array_type_nm_float = ctypes.c_float * (self.mdp.n * self.mdp.m)
         self.mdp.R = array_type_nm_float(*np.array(R).flatten())
         self.mdp.Rmax = float(np.array(R).max())
         self.mdp.Rmin = float(np.array(R).min())
@@ -85,7 +79,7 @@ class DeliveryMDP(object):
 
         return S, T
 
-    def _compute_rewards(self, T):
+    def _compute_rewards(self):
         R = [[0.0 for a in range(self.mdp.m)] for s in range(self.mdp.n)]
 
         for s, state in enumerate(self.states):
@@ -124,26 +118,14 @@ class DeliveryMDP(object):
         return policy
 
     def _get_state_map(self):
-        state_map = {}
-
-        for index in range(len(self.states)):
-            key = self.states[index]
-            state_map[key] = index
-        
-        return state_map
+        return {state: s for s, state in enumerate(self.states)}
 
     def _get_action_map(self):
-        action_map = {}
-
-        for index in range(len(self.actions)):
-            key = self.actions[index]
-            action_map[index] = key
-            
-        return action_map
+        return {a: action for a, action in enumerate(self.actions)}
 
     def solve(self):
         return {
             "state_map": self._get_state_map(),
             "action_map": self._get_action_map(),
-            "policy": self._get_policy(), 
+            "policy": self._get_policy()
         }

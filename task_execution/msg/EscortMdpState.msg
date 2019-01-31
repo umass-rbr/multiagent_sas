@@ -1,3 +1,3 @@
 Header header
 string location
-string with_person
+bool with_person

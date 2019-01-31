@@ -4,8 +4,13 @@ import rospy
 from task_execution.msg import EscortMdpState
 
 
-# TODO Implement a way to a get a location
-def get_current_location():
+# TODO Implement this function 
+def get_location():
+    return "shlomoOffice"
+
+
+# TODO Implement this function 
+def with_person():
     return True
 
 
@@ -15,11 +20,12 @@ def main():
 
     publisher = rospy.Publisher("monitor/escort_mdp_state", EscortMdpState, queue_size=10)
 
-    rate = rospy.Rate(rospy.get_param("/monitor/rate"))
+    rate = rospy.Rate(rospy.get_param("/escort_mdp_state_monitor/rate"))
     
     while not rospy.is_shutdown():
         msg = EscortMdpState()
-        msg.location = get_current_location()
+        msg.location = get_location()
+        msg.with_person = with_person()
 
         rospy.loginfo(msg)
         publisher.publish(msg)

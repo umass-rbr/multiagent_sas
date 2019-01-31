@@ -10,7 +10,7 @@ def get_location():
 
 
 # TODO Implement this function 
-def get_has_package():
+def has_package():
     return True
 
 
@@ -20,12 +20,12 @@ def main():
 
     publisher = rospy.Publisher("monitor/delivery_mdp_state", DeliveryMdpState, queue_size=10)
 
-    rate = rospy.Rate(rospy.get_param("/monitor/rate"))
+    rate = rospy.Rate(rospy.get_param("/delivery_mdp_state_monitor/rate"))
     
     while not rospy.is_shutdown():
         msg = DeliveryMdpState()
         msg.location = get_location()
-        msg.has_package = get_has_package()
+        msg.has_package = has_package()
 
         rospy.loginfo(msg)
         publisher.publish(msg)
