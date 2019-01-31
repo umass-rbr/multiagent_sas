@@ -22,7 +22,7 @@ class DeliveryTask(Task):
         return 'delivery'
 
     def __str__(self):
-        to_output = "[" + str(start_time) + ", " + str(end_time) + ", " + str(start_location) + ", " + str(end_location) + "]"
+        to_output = "[" + str(self.start_time) + ", " + str(self.end_time) + ", " + str(self.start_location) + ", " + str(self.end_location) + "]"
         return to_output
 
 class EscortTask():
@@ -36,8 +36,8 @@ class EscortTask():
         return 'escort'
 
     def __str__(self):
-        to_output = "[" + str(start_time) + ", " + str(end_time) + ", " + str(start_location) + ", " + str(end_location) + "]"
+        to_output = "[" + str(self.start_time) + ", " + str(self.end_time) + ", " + str(self.start_location) + ", " + str(self.end_location) + "]"
         return to_output
 
-t1 = DeliveryTask(0,'package1','2','1','0','3')
-print(t1.pack())
+#t1 = DeliveryTask(0,'package1','2','1','0','3')
+#print(t1.pack())
