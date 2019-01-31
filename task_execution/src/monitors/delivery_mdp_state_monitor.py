@@ -4,9 +4,14 @@ import rospy
 from task_execution.msg import DeliveryMdpState
 
 
-# TODO Implement a location monitor    
-def get_current_location():
+# TODO Implement this function 
+def get_location():
     return "shlomoOffice"
+
+
+# TODO Implement this function 
+def get_has_package():
+    return True
 
 
 def main():
@@ -19,7 +24,8 @@ def main():
     
     while not rospy.is_shutdown():
         msg = DeliveryMdpState()
-        msg.location = get_current_location()
+        msg.location = get_location()
+        msg.has_package = get_has_package()
 
         rospy.loginfo(msg)
         publisher.publish(msg)

@@ -1,3 +1,4 @@
+import ast
 import ctypes as ct
 import os
 import sys
@@ -117,26 +118,26 @@ class DeliveryMDP(object):
         policy_as_list = policy_as_string.split(" ")
         policy_as_list = [c for c in policy_as_list if c]
 
-        for s in range(len(self.states)):
-            policy[str(s)] = policy_as_list[s]
+        for index in range(len(self.states)):
+            policy[index] = int(policy_as_list[index])
 
         return policy
 
     def _get_state_map(self):
         state_map = {}
 
-        for s in range(len(self.states)):
-            key = str(self.states[s])
-            state_map[key] = str(s)
+        for index in range(len(self.states)):
+            key = self.states[index]
+            state_map[key] = index
         
         return state_map
 
     def _get_action_map(self):
         action_map = {}
 
-        for a in range(len(self.actions)):
-            key = str(self.actions[a])
-            action_map[key] = str(a)
+        for index in range(len(self.actions)):
+            key = self.actions[index]
+            action_map[index] = key
             
         return action_map
 

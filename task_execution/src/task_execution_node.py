@@ -16,7 +16,7 @@ escort_mdp_state = None
 
 def delivery_mdp_state_callback(state):
     global delivery_mdp_state
-    delivery_mdp_state = state
+    delivery_mdp_state = (state.location, state.has_package)
 
 
 def escort_mdp_state_callback(state):
@@ -100,28 +100,28 @@ def execute(task_assignment):
         action_map = solution["action_map"]
         policy = solution["policy"]
 
-        rospy.loginfo("Info[task_execution_node.execute]: Getting the current state...")
-        current_state = get_current_state(task_assignment)
-        if not current_state:
-            rospy.logerr("Error[task_execution_node.execute]: Received an invalid task assignment")
-            return
+        current_state = None
 
         while not rospy.is_shutdown():
+            rospy.loginfo("Info[task_execution_node.execute]: Getting the current state...")
             new_state = get_current_state(task_assignment)
-            if not current_state: 
+            if not new_state: 
                 rospy.logerr("Error[task_execution_node.execute]: Received an invalid task assignment")
                 return
-            
+
             if new_state != current_state:
                 current_state = new_state
-                current_action = action_map[policy[state_map[current_state]]]
+                
+                state_index = state_map[current_state]
+                action_index = policy[state_index]
+                current_action = action_map[action_index]
 
                 msg = TaskExecutionAction()
-                msg.x = map[current_action]["position"]["x"]
-                msg.y = map[current_action]["position"]["y"]
-                msg.theta = map[current_action]["position"]["theta"]
+                msg.x = map["locations"][current_action]["position"]["x"]
+                msg.y = map["locations"][current_action]["position"]["y"]
+                msg.theta = map["locations"][current_action]["position"]["theta"]
 
-                rospy.loginfo(msg)
+                rospy.loginfo("Info[task_execution_node.execute]: Publishing an action: %s", msg)
                 action_publisher.publish(msg)
 
             duration = rospy.get_param('/task_execution_node/duration')

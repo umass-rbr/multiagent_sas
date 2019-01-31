@@ -4,21 +4,24 @@
             "name": "Shlomo's Office",
             "position": {
                 "x": 0, 
-                "y": 0
+                "y": 0,
+                "theta": 0
             }
         },
         "amrl": {
             "name": "AMRL", 
             "position": {
                 "x": 5,
-                "y": 5
+                "y": 5,
+                "theta": 0
             }
         },
         "mailroom": {
             "name": "Mailroom", 
             "position": {
                 "x": 10,
-                "y": 10
+                "y": 10,
+                "theta": 0
             }
         }
     },
