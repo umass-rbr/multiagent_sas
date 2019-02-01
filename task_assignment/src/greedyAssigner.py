@@ -9,22 +9,23 @@ import rospy
 import task
 import robot
 
-thisFilePath = os.path.dirname(os.path.realpath(__file__))
 
-print thisFilePath
-
-sys.path.append(os.path.join(thisFilePath, "..", "..", "..", "multiagent_sas"))
-
+from task_assignment.msg import WorldState
 from task_assignment.msg import TaskAssignmentAction
-quit()
-
 
 pumpkin = robot.Robot(0,0,0)
 jackal = robot.Robot(1,1,3)
 human = robot.Robot(2,2,2)
 Robots = [pumpkin,jackal,human]
 
-#PUBLISHER = rospy.Publisher("task_assignment/task_execution_action", TaskExecutionAction, queue_size=1)
+PUBLISHER = rospy.Publisher("task_assignment/assignments", TaskAssignmentAction, queue_size=1)
+
+world_state_message = None
+
+
+def delivery_mdp_state_callback(message):
+    global world_state_message
+    world_state_message = message
 
 def power_set(iterable):    
     """ Return the power set of any iterable (e.g., list) with set elements. """
@@ -34,7 +35,7 @@ def power_set(iterable):
     powerSetList = [set(ele) for ele in list(powerSet)]
     return powerSetList
 
-def generate_assignments(tasks,robots):
+def generate_all_assignments(tasks,robots):
     A = list(power_set(list(it.product(tasks,robots))))
     A = [a for a in A if len(a) <= len(tasks)]
 
@@ -60,18 +61,22 @@ def generate_assignments(tasks,robots):
 
     return new_A
 
-def calculate_expected_assignment_cost(tasks, assignment):
+def calculate_expected_assignment_cost(assignment):
     cost = 0
-    assignment_tasks = set()
     for (task,robot_id) in assignment:
         cost += Robots[robot_id].get_break_probability(task.start_location,task.end_location) * 1000
         cost += ((1-Robots[robot_id].get_break_probability(task.start_location,task.end_location))
                 * Robots[robot_id].calculate_time(task.start_location,task.end_location))
-        assignment_tasks.add(task)
-    for task in set(tasks).difference(assignment_tasks):
-        cost += 1000
-    print(cost)
     return cost
+
+def find_best_assignments(tasks, assignments):
+    best_cost = float('inf')
+    best_assignment = None
+    for assignment in assignments:
+        exp_cost = calculate_expected_assignment_cost(assignment) + 1000 * (len(tasks) - len(assignment))
+        if exp_cost < best_cost:
+            best_cost = exp_cost
+            best_assignment = assignment
 
 
 def assignment_to_json(assignment):
@@ -81,30 +86,50 @@ def assignment_to_json(assignment):
     return json.dumps(assignment_dict, indent=4)
 
 
-def assign_tasks(tasks):
-    #tasks = worldState.tasks
-    #robot_status = worldState.robot_status
-    robot_status = [1,1,1]
-    robots = [i for i in range(len(robot_status)) if robot_status[i] == 1]
-    assignments = generate_assignments(tasks,robots)
-    best_cost = float('inf')
-    best_assignment = None
-    for assignment in assignments:
-        exp_cost = calculate_expected_assignment_cost(tasks,assignment)
-        if exp_cost < best_cost:
-            best_cost = exp_cost
-            best_assignment = assignment
+def unpack_tasks(tasks_as_dict):
+    T = []
+    for key in tasks_as_dict.keys():
+        if tasks_as_dict[key]['task_type'] == 'delivery':
+            T.append(namedtuple('task.DeliveryTask', d.keys())(*d.values()))
+        if tasks_as_dict[key]['task_type'] == 'escort':
+            T.append(namedtuple('task.EscortTask', d.keys())(*d.values()))
+    return T
+
+        
+def assign_tasks(message):
+    tasks = unpack_tasks(json.load(message.tasks))
+    robot_status = message.robot_status
+    #robot_status = [1,1,1]
+    robots = [Robots[i] for i in range(len(robot_status)) if robot_status[i] == 1]
+    if len(robots) != 0:
+        rospy.loginfo("Info[task_assignment_node.assign_tasks]: Generating tasks assignments...")
+        assignments = generate__all_assignments(tasks,robots)
+
+        rospy.loginfo("Info[task_assignment_node.assign_tasks]: Determining best assignments...")
+        best_assignment, best_cost = find_best_assignment(assignments)
+        
+        while not rospy.is_shutdown():
+            rospy.loginfo("Info[task_assignment_node.assign_tasks]: Publishing assignments...")
+            for (task,robot) in best_assignment:
+                assignment_msg = TaskAssignmentAction()
+                assignment_msg.robot_id = robot.get_id()
+                assignment_msg.task_type = task.get_type()
+                assignment_msg.task_data = task.pack()
+
+                rospy.loginfo("Info[task_assignment_node.assign_tasks]: Publishing the assignment: %s", assignment_msg)
+                PUBLISHER.publish(assignment_msg)
+
+            rospy.rate(10)
+
     return (best_assignment,best_cost)
 
 def main():
     rospy.init_node("task_assigner_node", anonymous=True)
     rospy.loginfo("Info[task_assignment_node.main]: Instantiated the task_assignment node")
 
-    rospy.Subscriber("monitor/delivery_mdp_state", DeliveryMdpState, delivery_mdp_state_callback, queue_size=1)
-    rospy.Subscriber("monitor/escort_mdp_state", EscortMdpState, escort_mdp_state_callback, queue_size=1)
-    rospy.Subscriber("task_assignment/task_assignment_action", TaskAssignmentAction, execute, queue_size=1)
+    rospy.Subscriber("monitor/world_state", WorldState, assign_tasks, queue_size = 1)
 
-    rospy.loginfo("Info[task_execution_node.main]: Spinning...")
+    rospy.loginfo("Info[task_assignment_node.main]: Spinning...")
     rospy.spin()
 
 
