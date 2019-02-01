@@ -11,7 +11,7 @@ class Task(object):
         return json.dumps(self.__dict__, indent=4)
 
     def get_id(self):
-        return id
+        return self.id
 
     def get_type(self):
         return self.task_type

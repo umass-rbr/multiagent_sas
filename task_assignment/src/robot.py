@@ -6,6 +6,13 @@ class Robot():
         self.r_type = r_type
         self.pos = pos
 
+    def get_id(self):
+        return self.id
+
+    def get_type(self):
+        return self.r_type
+
+
     def get_break_probability(self, l1, l2):
         # Inside Robot
         if self.r_type == 0:
@@ -40,9 +47,3 @@ class Robot():
 
         # Human
         return 4 * campus_map.distance(l1, l2)
-
-    def get_id(self):
-        return self.id
-
-    def get_type(self):
-        return self.r_type
