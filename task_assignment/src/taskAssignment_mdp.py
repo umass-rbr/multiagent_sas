@@ -27,7 +27,7 @@ import json
 
 thisFilePath = os.path.dirname(os.path.realpath(__file__))
 
-sys.path.append(os.path.join(thisFilePath, "..", "..", "..", "nova", "python"))
+sys.path.append(os.path.join(thisFilePath, "..", "..", "..", "..", "..", "nova", "python"))
 from nova.mdp import MDP
 from nova.mdp_vi import MDPVI
 from nova.mdp_value_function import MDPValueFunction

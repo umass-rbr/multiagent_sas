@@ -1,13 +1,30 @@
+import os
+import sys
 import json
 
 import numpy as np
 import itertools as it
+import rospy
 
 import task
 import robot
-#from msg import WorldState
 
-Robots = [robot.Robot(0,0,0), robot.Robot(1,1,3), robot.Robot(2,2,2)]
+thisFilePath = os.path.dirname(os.path.realpath(__file__))
+
+print thisFilePath
+
+sys.path.append(os.path.join(thisFilePath, "..", "..", "..", "multiagent_sas"))
+
+from task_assignment.msg import TaskAssignmentAction
+quit()
+
+
+pumpkin = robot.Robot(0,0,0)
+jackal = robot.Robot(1,1,3)
+human = robot.Robot(2,2,2)
+Robots = [pumpkin,jackal,human]
+
+#PUBLISHER = rospy.Publisher("task_assignment/task_execution_action", TaskExecutionAction, queue_size=1)
 
 def power_set(iterable):    
     """ Return the power set of any iterable (e.g., list) with set elements. """
@@ -79,9 +96,19 @@ def assign_tasks(tasks):
             best_assignment = assignment
     return (best_assignment,best_cost)
 
-
-
 def main():
+    rospy.init_node("task_assigner_node", anonymous=True)
+    rospy.loginfo("Info[task_assignment_node.main]: Instantiated the task_assignment node")
+
+    rospy.Subscriber("monitor/delivery_mdp_state", DeliveryMdpState, delivery_mdp_state_callback, queue_size=1)
+    rospy.Subscriber("monitor/escort_mdp_state", EscortMdpState, escort_mdp_state_callback, queue_size=1)
+    rospy.Subscriber("task_assignment/task_assignment_action", TaskAssignmentAction, execute, queue_size=1)
+
+    rospy.loginfo("Info[task_execution_node.main]: Spinning...")
+    rospy.spin()
+
+
+def test():
 
     t1 = task.DeliveryTask(0,'package1','2','1','0','3')
     t2 = task.DeliveryTask(1,'package2','1','0','0','2')
