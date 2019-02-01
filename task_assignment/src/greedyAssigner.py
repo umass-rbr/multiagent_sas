@@ -104,10 +104,10 @@ def assign_tasks(message):
     robots = [Robots[i] for i in range(len(robot_status)) if robot_status[i] == 1]
     if len(robots) != 0:
         rospy.loginfo("Info[task_assignment_node.assign_tasks]: Generating tasks assignments...")
-        assignments = generate_all_assignments(tasks,robots)
+        all_assignments = generate_all_assignments(tasks,robots)
 
         rospy.loginfo("Info[task_assignment_node.assign_tasks]: Determining best assignments...")
-        best_assignment, best_cost = find_best_assignment(tasks, assignments)
+        best_assignment, best_cost = find_best_assignment(tasks, all_assignments)
         
         rospy.loginfo("Info[task_assignment_node.assign_tasks]: Publishing assignments...")
         for (task,robot) in best_assignment:
