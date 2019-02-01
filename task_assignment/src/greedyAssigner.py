@@ -13,9 +13,9 @@ import robot
 from task_assignment.msg import WorldState
 from task_assignment.msg import TaskAssignmentAction
 
-pumpkin = robot.Robot(0,0,0)
-jackal = robot.Robot(1,1,3)
-human = robot.Robot(2,2,2)
+pumpkin = robot.Robot('pumpkin',0,0)
+jackal = robot.Robot('jackal',1,3)
+human = robot.Robot('human',2,2)
 Robots = [pumpkin,jackal,human]
 
 PUBLISHER = rospy.Publisher("task_assignment/assignments", TaskAssignmentAction, queue_size=1)
@@ -90,6 +90,7 @@ def unpack_tasks(tasks_as_dict):
     T = []
     for key in tasks_as_dict.keys():
         if tasks_as_dict[key]['task_type'] == 'delivery':
+            T.append( DeliveryTask() )
             T.append(namedtuple('task.DeliveryTask', d.keys())(*d.values()))
         if tasks_as_dict[key]['task_type'] == 'escort':
             T.append(namedtuple('task.EscortTask', d.keys())(*d.values()))
@@ -99,7 +100,6 @@ def unpack_tasks(tasks_as_dict):
 def assign_tasks(message):
     tasks = unpack_tasks(json.load(message.tasks))
     robot_status = message.robot_status
-    #robot_status = [1,1,1]
     robots = [Robots[i] for i in range(len(robot_status)) if robot_status[i] == 1]
     if len(robots) != 0:
         rospy.loginfo("Info[task_assignment_node.assign_tasks]: Generating tasks assignments...")
