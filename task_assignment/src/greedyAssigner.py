@@ -1,17 +1,16 @@
+#!/usr/bin/env python
+import itertools as it
+import json
+from collections import namedtuple
 import os
 import sys
-import json
 
 import numpy as np
-import itertools as it
 import rospy
 
-import task
 import robot
-
-
-from task_assignment.msg import WorldState
-from task_assignment.msg import TaskAssignmentAction
+import task
+from task_assignment.msg import TaskAssignmentAction, WorldState
 
 pumpkin = robot.Robot(0,0,0)
 jackal = robot.Robot(1,1,3)
@@ -20,12 +19,6 @@ Robots = [pumpkin,jackal,human]
 
 PUBLISHER = rospy.Publisher("task_assignment/assignments", TaskAssignmentAction, queue_size=1)
 
-world_state_message = None
-
-
-def delivery_mdp_state_callback(message):
-    global world_state_message
-    world_state_message = message
 
 def power_set(iterable):    
     """ Return the power set of any iterable (e.g., list) with set elements. """
@@ -69,14 +62,17 @@ def calculate_expected_assignment_cost(assignment):
                 * Robots[robot_id].calculate_time(task.start_location,task.end_location))
     return cost
 
-def find_best_assignments(tasks, assignments):
+def find_best_assignment(tasks, assignments):
     best_cost = float('inf')
     best_assignment = None
+
     for assignment in assignments:
         exp_cost = calculate_expected_assignment_cost(assignment) + 1000 * (len(tasks) - len(assignment))
         if exp_cost < best_cost:
             best_cost = exp_cost
             best_assignment = assignment
+
+    return best_assignment, best_cost
 
 
 def assignment_to_json(assignment):
@@ -87,26 +83,26 @@ def assignment_to_json(assignment):
 
 
 def unpack_tasks(tasks_as_dict):
+    print(tasks_as_dict)
     T = []
     for key in tasks_as_dict.keys():
         if tasks_as_dict[key]['task_type'] == 'delivery':
-            T.append(namedtuple('task.DeliveryTask', d.keys())(*d.values()))
+            T.append(namedtuple('task.DeliveryTask', tasks_as_dict.keys())(*tasks_as_dict.values()))
         if tasks_as_dict[key]['task_type'] == 'escort':
-            T.append(namedtuple('task.EscortTask', d.keys())(*d.values()))
+            T.append(namedtuple('task.EscortTask', tasks_as_dict.keys())(*tasks_as_dict.values()))
     return T
 
         
 def assign_tasks(message):
-    tasks = unpack_tasks(json.load(message.tasks))
+    tasks = unpack_tasks(json.loads(message.tasks))
     robot_status = message.robot_status
-    #robot_status = [1,1,1]
     robots = [Robots[i] for i in range(len(robot_status)) if robot_status[i] == 1]
     if len(robots) != 0:
         rospy.loginfo("Info[task_assignment_node.assign_tasks]: Generating tasks assignments...")
-        assignments = generate__all_assignments(tasks,robots)
+        assignments = generate_all_assignments(tasks,robots)
 
         rospy.loginfo("Info[task_assignment_node.assign_tasks]: Determining best assignments...")
-        best_assignment, best_cost = find_best_assignment(assignments)
+        best_assignment, best_cost = find_best_assignment(tasks, assignments)
         
         while not rospy.is_shutdown():
             rospy.loginfo("Info[task_assignment_node.assign_tasks]: Publishing assignments...")

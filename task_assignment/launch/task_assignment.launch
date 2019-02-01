@@ -1,0 +1,4 @@
+<?xml version="1.0" ?>
+<launch>
+  <node pkg="task_assignment" type="greedyAssigner.py" name="task_assignment_node" output="screen" />
+</launch>
