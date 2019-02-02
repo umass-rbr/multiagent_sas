@@ -11,6 +11,8 @@ from nova.mdp import MDP
 from nova.mdp_value_function import MDPValueFunction
 from nova.mdp_vi import MDPVI
 
+from simulate import simulate
+
 
 # TODO Implement a pretty print function
 class DeliveryMDP(object):
@@ -143,8 +145,13 @@ class DeliveryMDP(object):
             "policy": self._generate_policy()
         }
 
+    def is_goal(self, current_state):
+        if current_state[0] == self.dropoff_location and current_state[1] == True:
+            return True
+        return False
+
 if __name__ == '__main__':
     with open('../tmp/lgrc.json') as f:
         map = json.load(f)
         delivery-mdp = DeliveryMDP(map, 'shlomoOffice', 'AMRL')
-        print delivery-mdp.solve()
+        simulate(delivery-mdp, ('mailroom', False))
