@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import datetime
-import itertools as it
 import json
 import os
 import sys
@@ -8,6 +7,7 @@ import sys
 import numpy as np
 import rospy
 
+import utils
 from robot import Robot, RobotType
 from task import DeliveryTask, EscortTask
 from task_assignment.msg import TaskAssignmentAction, WorldState
@@ -15,12 +15,8 @@ from task_assignment.msg import TaskAssignmentAction, WorldState
 PUBLISHER = rospy.Publisher('task_assignment/task_assignment_action', TaskAssignmentAction, queue_size=1)
 
 TASK_MAP = {
-    'delivery': {
-        'constructor': lambda task: DeliveryTask(**task)
-    },
-    'escort': {
-        'constructor': lambda task: EscortTask(**task)
-    }
+    'delivery': DeliveryTask,
+    'escort': EscortTask
 }
 
 PUMPKIN = Robot('pumpkin', RobotType.TURTLEBOT)
@@ -34,48 +30,44 @@ def get_map():
         return json.load(f)
 
 
-def power_set(iterable):    
-    """ Return the power set of any iterable (e.g., list) with set elements. """
+def generate_assignments(tasks, robots):
+    options = utils.get_cartesian_product(tasks, robots)
+    assignments = utils.get_power_set(options)
 
-    s = list(iterable)
-    powerSet = it.chain.from_iterable(it.combinations(s, r) for r in range(len(s) + 1))
-    powerSetList = [set(ele) for ele in list(powerSet)]
-    return powerSetList
+    trimmed_assignments = [assignment for assignment in assignments if len(assignment) <= len(tasks)]
 
+    feasible_assignments = []
+    for assignment in trimmed_assignments:
+        is_feasible = True
+        
+        is_task_used = [False for _ in tasks]
+        is_robot_used = [False for _ in robots]
 
-def generate_all_assignments(tasks,robots):
-    A = list(power_set(list(it.product(tasks, robots))))
-    A = [a for a in A if len(a) <= len(tasks)]
+        for task, robot in assignment:
+            task_index = tasks.index(task)
+            robot_index = robots.index(robot)
 
-    #Clean up the powerset to remove infeasible actions
-    #I.e. assigning multiple tasks to 1 robot or vice-versa
-    new_A = []
-    for a in A:
-        t_check = [0 for t in tasks]
-        r_check = [0 for r in robots]
-        check = True
-        for t, r in a:
-            if t_check[tasks.index(t)] == 1:
-                check = False
+            if is_task_used[task_index] or is_robot_used[robot_index]:
+                is_feasible = False
                 break
-            elif r_check[robots.index(r)] == 1:
-                check = False
-                break
-            else:
-                t_check[tasks.index(t)] = 1
-                r_check[robots.index(r)] = 1
-        if check is True: 
-            new_A.append(a)
 
-    return new_A
+            is_task_used[task_index] = True
+            is_robot_used[robot_index] = True
+
+        if is_feasible: 
+            feasible_assignments.append(assignment)
+
+    return feasible_assignments
 
 
 def calculate_expected_assignment_cost(assignment, map):
     cost = 0
+
     for task, robot in assignment:
-        cost += robot.get_break_probability(task.pickup_location, task.dropoff_location) * 1000
-        cost += ((1 - robot.get_break_probability(task.pickup_location, task.dropoff_location))
-                * robot.calculate_time(map, task.pickup_location, task.dropoff_location))
+        break_probability = robot.get_break_probability(task.pickup_location, task.dropoff_location)
+        time = robot.calculate_time(map, task.pickup_location, task.dropoff_location)
+        cost += 1000 * break_probability + (time * (1 - break_probability))
+
     return cost
 
 
@@ -85,6 +77,7 @@ def find_best_assignment(tasks, assignments, map):
 
     for assignment in assignments:
         exp_cost = calculate_expected_assignment_cost(assignment, map) + 1000 * (len(tasks) - len(assignment))
+        
         if exp_cost < best_cost:
             best_cost = exp_cost
             best_assignment = assignment
@@ -104,37 +97,35 @@ def assignment_to_json(assignment):
 def unpack_tasks(tasks_as_dict):
     T = []
 
-    for key in tasks_as_dict.keys():
-        print(tasks_as_dict)
-        task = tasks_as_dict[key]
-        T.append(TASK_MAP[task['task_type']]['constructor'](task))
+    for task in tasks_as_dict.values():
+        T.append(TASK_MAP[task['task_type']](**task))
 
     return T
 
         
-def assign_tasks(message):
+def assign(message):
     tasks = unpack_tasks(json.loads(message.tasks))
     robot_status = message.robot_status
 
-    available_robots = [ROBOTS[i] for i in range(len(robot_status)) if robot_status[i]]
+    available_robots = [robot for i, robot in enumerate(ROBOTS) if robot_status[i]]
 
     map = get_map()
 
     if available_robots:
-        rospy.loginfo('Info[task_assignment_node.assign_tasks]: Generating tasks assignments...')
-        all_assignments = generate_all_assignments(tasks, available_robots)
+        rospy.loginfo('Info[task_assignment_node.assign]: Generating tasks assignments...')
+        assignments = generate_assignments(tasks, available_robots)
 
-        rospy.loginfo('Info[task_assignment_node.assign_tasks]: Determining best assignments...')
-        best_assignment, best_cost = find_best_assignment(tasks, all_assignments, map)
+        rospy.loginfo('Info[task_assignment_node.assign]: Determining best assignments...')
+        best_assignment, best_cost = find_best_assignment(tasks, assignments, map)
         
-        rospy.loginfo('Info[task_assignment_node.assign_tasks]: Publishing assignments...')
+        rospy.loginfo('Info[task_assignment_node.assign]: Publishing assignments...')
         for task, robot in best_assignment:
             message = TaskAssignmentAction()
             message.robot_id = robot.get_id()
             message.task_type = task.get_type()
             message.task_data = task.pack()
 
-            rospy.loginfo('Info[task_assignment_node.assign_tasks]: Publishing the assignment: %s', message)
+            rospy.loginfo('Info[task_assignment_node.assign]: Publishing the assignment: %s', message)
             PUBLISHER.publish(message)
 
         rate = rospy.Rate(10)
@@ -147,7 +138,7 @@ def main():
     rospy.init_node('task_assigner_node', anonymous=True)
     rospy.loginfo('Info[task_assignment_node.main]: Instantiated the task_assignment node')
 
-    rospy.Subscriber('monitor/world_state', WorldState, assign_tasks, queue_size=1)
+    rospy.Subscriber('monitor/world_state', WorldState, assign, queue_size=1)
 
     rospy.loginfo('Info[task_assignment_node.main]: Spinning...')
     rospy.spin()
@@ -172,7 +163,7 @@ def test():
 
     T = [t1,t2,t3,t4]
 
-    assignment,cost = assign_tasks(T)
+    assignment,cost = assign(T)
 
     print(assignment_to_json(assignment))
     print(cost)
