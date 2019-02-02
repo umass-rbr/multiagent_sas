@@ -14,13 +14,17 @@ from nova.mdp_vi import MDPVI
 
 # TODO Implement a pretty print function
 class EscortMDP(object):
-    def __init__(self, map, start_location, end_location):
+    def __init__(self, map, pickup_location, dropoff_location):
         self.map = map
-        self.start_location = start_location
-        self.end_location = end_location
+        self.pickup_location = pickup_location
+        self.dropoff_location = dropoff_location
 
-        self.name = "escort-mdp-{}-{}-{}".format(self.map["name"], self.start_location, self.end_location)
+        self.name = "escort-mdp-{}-{}-{}".format(self.map["name"], self.pickup_location, self.dropoff_location)
         
+        self.state_map = None
+        self.action_map = None
+        self.policy = None
+
         self._initialize()
 
     def _initialize(self):
@@ -63,7 +67,7 @@ class EscortMDP(object):
 
         for s, state in enumerate(self.states):
             for a, action in enumerate(self.actions):
-                if state[0] == self.end_location and state[1] == True:
+                if state[0] == self.dropoff_location and state[1] == True:
                     T[s][a][s] = 1.0
                     continue
 
@@ -71,11 +75,14 @@ class EscortMDP(object):
                     S[s][a][sp] = sp
 
                     if action == "pickup":
-                        if state[0] == self.start_location and state[0] == statePrime[0] and state[1] == False and statePrime[1] == True:
+                        if state[0] == self.pickup_location and state[0] == statePrime[0] and state[1] == False and statePrime[1] == True:
                             T[s][a][sp] = 1.0
                             break
-                    else:
-                        if self.map["paths"][state[0]][action] and action == statePrime[0]:
+                        else:
+                            continue
+
+                    if self.map["paths"][state[0]].has_key(action):
+                        if statePrime[0] == action and state[1] == statePrime[1]:
                             T[s][a][sp] = 1.0
                             break
 
@@ -86,23 +93,22 @@ class EscortMDP(object):
 
         for s, state in enumerate(self.states):
             for a, action in enumerate(self.actions):
-                if action == "pickup":
-                    if state[0] == self.start_location and state[1] == 0:
-                        R[s][a] = float("inf") 
-                else:
-                    path_cost = self.map["paths"][state[0]][action]
-                    if not path_cost:
-                        R[s][a] = float("-inf") 
+
+                if action is not "pickup":
+                    if not self.map["paths"][state[0]].has_key(action):
+                        R[s][a] = float("-inf")
                     else:
-                        R[s][a] = path_cost
+                        R[s][a] -= self.map["paths"][state[0]][action]['cost']
 
         return R
 
     def _generate_state_map(self):
-        return {state: s for s, state in enumerate(self.states)}
+        self.state_map = {state: s for s, state in enumerate(self.states)}
+        return self.state_map
 
     def _generate_action_map(self):
-        return {a: action for a, action in enumerate(self.actions)}
+        self.action_map = {a: action for a, action in enumerate(self.actions)}
+        return self.action_map
 
     def _generate_policy(self):
         policy = {}
@@ -120,9 +126,17 @@ class EscortMDP(object):
         for index in range(len(self.states)):
             policy[index] = int(policy_as_list[index])
 
-        return policy
+        self.policy = policy
+        return self.policy
 
     def solve(self):
+        if self.policy is not None:
+            return {
+                "state_map": self.state_map,
+                "action_map": self.action_map,
+                "policy": self.policy
+            }
+
         return {
             "state_map": self._generate_state_map(),
             "action_map": self._generate_action_map(),
