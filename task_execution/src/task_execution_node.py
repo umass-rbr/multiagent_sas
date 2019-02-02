@@ -43,21 +43,23 @@ def get_map(task_assignment):
 def execute(task_assignment):
     rospy.loginfo("Info[task_execution_node.execute]: Received a task assignment: %s", task_assignment)
 
-    activation_time = rospy.Time.now()
-
     robot_id = rospy.get_param('/task_execution_node/robot_id')
     wait_duration = rospy.get_param('/task_execution_node/wait_duration')
     timeout_duration = rospy.get_param('/task_execution_node/timeout_duration')
 
     if task_assignment.robot_id == robot_id:
+        task_handler = TASK_MAP[task_assignment.task_type]["task_handler"]
+        message_selector = TASK_MAP[task_assignment.task_type]["message_selector"]
+        task_data = json.loads(task_assignment.task_data)
+
         rospy.loginfo("Info[task_execution_node.execute]: Retrieving the map...")
         map = get_map(task_assignment)
 
         rospy.loginfo("Info[task_execution_node.execute]: Generating the problem...")
-        problem = TASK_MAP[task_assignment.task_type]["task_handler"].get_problem(map, json.loads(task_assignment.task_data))
+        problem = task_handler.get_problem(map, task_data)
                     
         rospy.loginfo("Info[task_execution_node.execute]: Solving the problem...")
-        solution = TASK_MAP[task_assignment.task_type]["task_handler"].get_solution(problem)
+        solution = task_handler.get_solution(problem)
 
         state_map = solution["state_map"]
         action_map = solution["action_map"]
@@ -65,10 +67,10 @@ def execute(task_assignment):
 
         current_state = None
         
-        while not rospy.is_shutdown():
+        while not task_handler.is_goal(current_state, task_data):
             rospy.loginfo("Info[task_execution_node.execute]: Retrieving the current state...")
-            state_message = TASK_MAP[task_assignment.task_type]["message_selector"]()
-            new_state = TASK_MAP[task_assignment.task_type]["task_handler"].get_state(state_message)
+            state_message = message_selector()
+            new_state = task_handler.get_state(state_message)
 
             if new_state != current_state:
                 current_state = new_state
@@ -80,9 +82,11 @@ def execute(task_assignment):
                 action_message = TaskExecutionAction()
                 action_message.header.stamp = rospy.Time.now()
                 action_message.header.frame_id = "/task_execution_node"
-                action_message.x = map["locations"][current_action]["position"]["x"]
-                action_message.y = map["locations"][current_action]["position"]["y"]
-                action_message.theta = map["locations"][current_action]["position"]["theta"]
+                action_message.x = map["locations"][current_action]["pose"]["x"]
+                action_message.y = map["locations"][current_action]["pose"]["y"]
+                action_message.theta = map["locations"][current_action]["pose"]["theta"]
+
+                activation_time = rospy.Time.now()
 
                 rospy.loginfo("Info[task_execution_node.execute]: Publishing the action: %s", action_message)
                 PUBLISHER.publish(action_message)
