@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-import delivery_mdp
-import escort_mdp
-
 def simulate(self, mdp, init):
     """ Simulate a trial starting at initial state. This will output a trace of the policy execution
         during runtime. 
@@ -11,7 +8,7 @@ def simulate(self, mdp, init):
             The reward/cost of a stochastic simulation following the optimal policy.
     """
 
-    print(print("------------------------ Solving MDP Now ...."))
+    print("------------------------ Solving MDP Now ....")
     mdp.solve()
 
     reward = 0

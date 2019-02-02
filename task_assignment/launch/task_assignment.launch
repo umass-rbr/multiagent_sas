@@ -1,4 +1,8 @@
 <?xml version="1.0" ?>
 <launch>
-  <node pkg="task_assignment" type="greedyAssigner.py" name="task_assignment_node" output="screen" />
+  <node pkg="task_assignment" type="greedy_task_assigner.py" name="task_assignment_node" output="screen" />
+
+  <!-- <node pkg="task_assignment" type="world_state_monitor.py" name="world_state_monitor">
+    <param name="rate" value="10" />
+  </node> -->
 </launch>

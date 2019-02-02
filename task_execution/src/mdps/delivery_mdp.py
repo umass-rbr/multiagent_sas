@@ -1,4 +1,5 @@
 import ctypes
+import json
 import os
 import sys
 
@@ -150,11 +151,13 @@ class DeliveryMDP(object):
             return True
         return False
 
+
 def main():
     with open('../tmp/lgrc.json') as f:
         map = json.load(f)
-        delivery-mdp = DeliveryMDP(map, 'shlomoOffice', 'AMRL')
-        simulate(delivery-mdp, ('mailroom', False))
+        delivery_mdp = DeliveryMDP(map, 'shlomoOffice', 'AMRL')
+        simulate(delivery_mdp, ('mailroom', False))
+
 
 if __name__ == '__main__':
     main()

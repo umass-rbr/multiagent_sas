@@ -6,12 +6,12 @@ from task_assignment.msg import WorldState
 
 # TODO Implement this function 
 def get_tasks():
-    pass
+    return True
 
 
 # TODO Implement this function 
 def get_robot_statuses():
-    pass
+    return True
 
 
 def main():
@@ -20,15 +20,15 @@ def main():
 
     publisher = rospy.Publisher("monitor/world_state", WorldState)
 
-    #rate = rospy.Rate(rospy.get_param("/world_state_monitor/rate"))
+    rate = rospy.Rate(rospy.get_param("/world_state_monitor/rate"))
     
     while not rospy.is_shutdown():
-        state_msg = WorldState()
-        state_msg.tasks = get_tasks()
-        state_msg.robot_status = get_robot_statuses()
+        message = WorldState()
+        message.tasks = get_tasks()
+        message.robot_status = get_robot_statuses()
 
-        rospy.loginfo(state_msg)
-        publisher.publish(state_msg)
+        rospy.loginfo(message)
+        publisher.publish(message)
 
         rate.sleep()
 
