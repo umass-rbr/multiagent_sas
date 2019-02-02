@@ -16,7 +16,6 @@ class Task(object):
     def get_type(self):
         return self.task_type
 
-
 # TODO Can we make an "abstract" task that has an id, start_time, end_time?
 class DeliveryTask(Task):
     def __init__(self, id, package, start_location, end_location, start_time, end_time):

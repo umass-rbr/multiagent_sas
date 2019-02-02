@@ -12,7 +12,6 @@ class Robot():
     def get_type(self):
         return self.r_type
 
-
     def get_break_probability(self, l1, l2):
         # Inside Robot
         if self.r_type == 0:
