@@ -3,7 +3,7 @@
     "locations": {
         "shlomoOffice": {
             "name": "Shlomo's Office",
-            "position": {
+            "pose": {
                 "x": 0, 
                 "y": 0,
                 "theta": 0
@@ -11,7 +11,7 @@
         },
         "amrl": {
             "name": "AMRL", 
-            "position": {
+            "pose": {
                 "x": 5,
                 "y": 5,
                 "theta": 0
@@ -19,7 +19,7 @@
         },
         "mailroom": {
             "name": "Mailroom", 
-            "position": {
+            "pose": {
                 "x": 10,
                 "y": 10,
                 "theta": 0
@@ -28,19 +28,32 @@
     },
     "paths": {
         "shlomoOffice": {
-            "shlomoOffice": 0,
-            "amrl": 25,
-            "mailroom": 37
+            "amrl": { 
+                "cost": 69
+            },
+            "mailroom": { 
+                "cost": 42,
+                "obstruction": "door"
+            }
         },
         "amrl": {
-            "shlomoOffice": 0,
-            "amrl": 25,
-            "mailroom": 37
+            "shlomoOffice": { 
+                "cost": 69
+            },
+            "mailroom": { 
+                "cost": 42,
+                "obstruction": "door"
+            }
         },
         "mailroom": {
-            "shlomoOffice": 0,
-            "amrl": 25,
-            "mailroom": 37
+            "shlomoOffice": { 
+                "cost": 69,
+                "obstruction": "door"
+            },
+            "amrl": { 
+                "cost": 69,
+                "obstruction": "door"
+            }
         }
     }
 }

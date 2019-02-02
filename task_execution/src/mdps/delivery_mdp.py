@@ -70,14 +70,15 @@ class DeliveryMDP(object):
                 for sp, statePrime in enumerate(self.states):
                     S[s][a][sp] = sp
 
-                    if action == "pickup":
-                        if state[0] == self.start_location and state[0] == statePrime[0] and state[1] == False and statePrime[1] == True:
-                            T[s][a][sp] = 1.0
-                            break
-                    else:
-                        if self.map["paths"][state[0]][action] and action == statePrime[0]:
-                            T[s][a][sp] = 1.0
-                            break
+                    if action in self.map["paths"][state[0]]:
+                        if action == "pickup":
+                            if state[0] == self.start_location and state[0] == statePrime[0] and state[1] == False and statePrime[1] == True:
+                                T[s][a][sp] = 1.0
+                                break
+                        else:
+                            if self.map["paths"][state[0]][action] and action == statePrime[0]:
+                                T[s][a][sp] = 1.0
+                                break
 
         return S, T
 
@@ -86,15 +87,16 @@ class DeliveryMDP(object):
 
         for s, state in enumerate(self.states):
             for a, action in enumerate(self.actions):
-                if action == "pickup":
-                    if state[0] == self.start_location and state[1] == 0:
-                        R[s][a] = float("inf") 
-                else:
-                    path_cost = self.map["paths"][state[0]][action]
-                    if not path_cost:
-                        R[s][a] = float("-inf") 
+                if action in self.map["paths"][state[0]]:
+                    if action == "pickup":
+                        if state[0] == self.start_location and state[1] == 0:
+                            R[s][a] = float("inf") 
                     else:
-                        R[s][a] = path_cost
+                        path = self.map["paths"][state[0]][action]
+                        if not path:
+                            R[s][a] = float("-inf") 
+                        else:
+                            R[s][a] = path["cost"]
 
         return R
 
