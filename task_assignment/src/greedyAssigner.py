@@ -1,23 +1,32 @@
 #!/usr/bin/env python
 import itertools as it
 import json
-from collections import namedtuple
+import datetime
 import os
 import sys
 
 import numpy as np
-#import rospy
+import rospy
 
 import robot
 from task import DeliveryTask, EscortTask
-#from task_assignment.msg import TaskAssignmentAction, WorldState
+from task_assignment.msg import TaskAssignmentAction, WorldState
 
 pumpkin = robot.Robot('pumpkin',0,0)
 jackal = robot.Robot('jackal',1,3)
 human = robot.Robot('human',2,2)
 Robots = [pumpkin,jackal,human]
 
-#PUBLISHER = rospy.Publisher("task_assignment/task_assignment_action", TaskAssignmentAction, queue_size=1)
+TASK_MAP = {
+    'delivery': {
+        'constructor': lambda task: DeliveryTask(**task)
+    },
+    'escort': {
+        'constructor': lambda task: EscortTask(**task)
+    }
+}
+
+PUBLISHER = rospy.Publisher('task_assignment/task_assignment_action', TaskAssignmentAction, queue_size=1)
 
 
 def power_set(iterable):    
@@ -87,14 +96,17 @@ def unpack_tasks(tasks_as_dict):
 
     for key in tasks_as_dict.keys():
         task = json.loads(tasks_as_dict[key])
-        if task['task_type'] == 'delivery':
-            task.pop('task_type', None)
-            deliveryTask = DeliveryTask(**task)
-            T.append(deliveryTask)
-        elif task['task_type'] == 'escort':
-            task.pop('task_type', None)
-            escortTask = EscortTask(**task)
-            T.append(escortTask)
+        T.append( TASK_MAP[task['task_type']]['constructor'](task) )
+
+        # Make sure the above works correctly in full test before removing this comment.
+        # if task['task_type'] == 'delivery':
+        #     task.pop('task_type', None)
+        #     deliveryTask = DeliveryTask(**task)
+        #     T.append(deliveryTask)
+        # elif task['task_type'] == 'escort':
+        #     task.pop('task_type', None)
+        #     escortTask = EscortTask(**task)
+        #     T.append(escortTask)
     return T
 
         
@@ -103,20 +115,20 @@ def assign_tasks(message):
     robot_status = message.robot_status
     robots = [Robots[i] for i in range(len(robot_status)) if robot_status[i] == 1]
     if len(robots) != 0:
-        rospy.loginfo("Info[task_assignment_node.assign_tasks]: Generating tasks assignments...")
+        rospy.loginfo('Info[task_assignment_node.assign_tasks]: Generating tasks assignments...')
         all_assignments = generate_all_assignments(tasks,robots)
 
-        rospy.loginfo("Info[task_assignment_node.assign_tasks]: Determining best assignments...")
+        rospy.loginfo('Info[task_assignment_node.assign_tasks]: Determining best assignments...')
         best_assignment, best_cost = find_best_assignment(tasks, all_assignments)
         
-        rospy.loginfo("Info[task_assignment_node.assign_tasks]: Publishing assignments...")
+        rospy.loginfo('Info[task_assignment_node.assign_tasks]: Publishing assignments...')
         for (task,robot) in best_assignment:
             assignment_msg = TaskAssignmentAction()
             assignment_msg.robot_id = str(robot.get_id())
             assignment_msg.task_type = task.get_type()
             assignment_msg.task_data = task.pack()
 
-            rospy.loginfo("Info[task_assignment_node.assign_tasks]: Publishing the assignment: %s", assignment_msg)
+            rospy.loginfo('Info[task_assignment_node.assign_tasks]: Publishing the assignment: %s', assignment_msg)
             PUBLISHER.publish(assignment_msg)
 
         rate = rospy.Rate(10)
@@ -125,21 +137,21 @@ def assign_tasks(message):
     return (best_assignment,best_cost)
 
 def main():
-    rospy.init_node("task_assigner_node", anonymous=True)
-    rospy.loginfo("Info[task_assignment_node.main]: Instantiated the task_assignment node")
+    rospy.init_node('task_assigner_node', anonymous=True)
+    rospy.loginfo('Info[task_assignment_node.main]: Instantiated the task_assignment node')
 
-    rospy.Subscriber("monitor/world_state", WorldState, assign_tasks, queue_size=1)
+    rospy.Subscriber('monitor/world_state', WorldState, assign_tasks, queue_size=1)
 
-    rospy.loginfo("Info[task_assignment_node.main]: Spinning...")
+    rospy.loginfo('Info[task_assignment_node.main]: Spinning...')
     rospy.spin()
 
 
 def test():
 
-    t1 = DeliveryTask(0,'package1','2','1','0','3')
-    t2 = DeliveryTask(1,'package2','1','0','0','2')
-    t3 = DeliveryTask(2,'package3','1','2','1','4')
-    t4 = DeliveryTask(3,'package4','2','3','3','4')
+    t1 = DeliveryTask(0,'package1','shlomoOffice','AMRL','0','3')
+    t2 = DeliveryTask(1,'package2','AMRL','shlomoOffice','0','2')
+    t3 = DeliveryTask(2,'package3','AMRL','mailroom','1','4')
+    t4 = DeliveryTask(3,'package4','shlomoOffice','mailroom','3','4')
 
     T = {}
 
@@ -160,4 +172,4 @@ def test():
     print(cost)
 
 if __name__ == '__main__':
-    test()
+    main()
