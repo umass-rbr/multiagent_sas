@@ -150,8 +150,11 @@ class DeliveryMDP(object):
             return True
         return False
 
-if __name__ == '__main__':
+def main():
     with open('../tmp/lgrc.json') as f:
         map = json.load(f)
         delivery-mdp = DeliveryMDP(map, 'shlomoOffice', 'AMRL')
         simulate(delivery-mdp, ('mailroom', False))
+
+if __name__ == '__main__':
+    main()
