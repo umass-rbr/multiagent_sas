@@ -6,18 +6,18 @@ import os
 import sys
 
 import numpy as np
-import rospy
+#import rospy
 
 import robot
 from task import DeliveryTask, EscortTask
-from task_assignment.msg import TaskAssignmentAction, WorldState
+#from task_assignment.msg import TaskAssignmentAction, WorldState
 
 pumpkin = robot.Robot('pumpkin',0,0)
 jackal = robot.Robot('jackal',1,3)
 human = robot.Robot('human',2,2)
 Robots = [pumpkin,jackal,human]
 
-PUBLISHER = rospy.Publisher("task_assignment/task_assignment_action", TaskAssignmentAction, queue_size=1)
+#PUBLISHER = rospy.Publisher("task_assignment/task_assignment_action", TaskAssignmentAction, queue_size=1)
 
 
 def power_set(iterable):    
@@ -83,18 +83,18 @@ def assignment_to_json(assignment):
 
 
 def unpack_tasks(tasks_as_dict):
-    print(tasks_as_dict)
     T = []
 
     for key in tasks_as_dict.keys():
-        task = tasks_as_dict[key]
+        task = json.loads(tasks_as_dict[key])
         if task['task_type'] == 'delivery':
-            deliveryTask = DeliveryTask(task['id'], task['package'], task['start_location'], task['end_location'], task['start_time'], task['end_time'])
+            task.pop('task_type', None)
+            deliveryTask = DeliveryTask(**task)
             T.append(deliveryTask)
-        if tasks_as_dict[key]['task_type'] == 'escort':
-            escortTask = DeliveryTask(task['id'], task['person'], task['start_location'], task['end_location'], task['start_time'], task['end_time'])
+        elif task['task_type'] == 'escort':
+            task.pop('task_type', None)
+            escortTask = EscortTask(**task)
             T.append(escortTask)
-
     return T
 
         
@@ -136,10 +136,21 @@ def main():
 
 def test():
 
-    t1 = task.DeliveryTask(0,'package1','2','1','0','3')
-    t2 = task.DeliveryTask(1,'package2','1','0','0','2')
-    t3 = task.DeliveryTask(2,'package3','1','2','1','4')
-    t4 = task.DeliveryTask(3,'package4','2','3','3','4')
+    t1 = DeliveryTask(0,'package1','2','1','0','3')
+    t2 = DeliveryTask(1,'package2','1','0','0','2')
+    t3 = DeliveryTask(2,'package3','1','2','1','4')
+    t4 = DeliveryTask(3,'package4','2','3','3','4')
+
+    T = {}
+
+    T[1] = t1.pack()
+    T[2] = t2.pack()
+    T[3] = t3.pack()
+    T[4] = t4.pack()
+
+    T2 = unpack_tasks(T)
+    print(T2)
+    quit()
 
     T = [t1,t2,t3,t4]
 
@@ -149,4 +160,4 @@ def test():
     print(cost)
 
 if __name__ == '__main__':
-    main()
+    test()
