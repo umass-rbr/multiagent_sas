@@ -2,9 +2,10 @@
 import json
 
 import rospy
+
 import utils
 from robot import Robot, RobotType
-from task_assignment.msg import TaskAssignmentAction, TaskRequest, WorldState
+from task_assignment.msg import TaskAssignmentAction, WorldState
 from task_handler import DeliveryTaskHandler, EscortTaskHandler
 
 PUBLISHER = rospy.Publisher('task_assignment/task_assignment_action', TaskAssignmentAction, queue_size=1)
@@ -25,9 +26,9 @@ SHLOMO = Robot('human', RobotType.HUMAN)
 ROBOTS = [PUMPKIN, JAKE, SHLOMO]
 
 
-def get_map():
-    with open('/home/justin/Documents/Development/catkin_ws/src/task_assignment/src/tmp/lgrc.json') as map_file:
-        return json.load(map_file)
+def get_world_map():
+    with open('/home/justin/Documents/Development/catkin_ws/src/task_assignment/src/tmp/lgrc.json') as world_map_file:
+        return json.load(world_map_file)
 
 
 def generate_assignments(tasks, robots):
@@ -60,23 +61,23 @@ def generate_assignments(tasks, robots):
     return feasible_assignments
 
 
-def calculate_expected_cost(assignment, map):
+def calculate_expected_cost(assignment, world_map):
     cost = 0
 
     for task, robot in assignment:
         break_probability = robot.get_break_probability(task.pickup_location, task.dropoff_location)
-        time = robot.get_time_duration(map, task.pickup_location, task.dropoff_location)
+        time = robot.get_time_duration(world_map, task.pickup_location, task.dropoff_location)
         cost += 1000 * break_probability + time * (1 - break_probability)
 
     return cost
 
 
-def find_best_assignment(tasks, assignments, map):
+def find_best_assignment(tasks, assignments, world_map):
     best_assignment = None
     best_expected_cost = float('inf')
 
     for assignment in assignments:
-        expected_cost = calculate_expected_cost(assignment, map) + 1000 * (len(tasks) - len(assignment))
+        expected_cost = calculate_expected_cost(assignment, world_map) + 1000 * (len(tasks) - len(assignment))
 
         if expected_cost < best_expected_cost:
             best_assignment = assignment
@@ -104,22 +105,22 @@ def assign(world_state):
     tasks = get_tasks(world_state.task_requests)
     available_robots = get_available_robots(world_state.robot_status)
 
-    map = get_map()
+    world_map = get_world_map()
 
     if available_robots:
         rospy.loginfo('Info[greedy_task_assignment_node.assign]: Generating tasks assignments...')
         assignments = generate_assignments(tasks, available_robots)
 
         rospy.loginfo('Info[greedy_task_assignment_node.assign]: Determining best assignments...')
-        best_assignment, best_cost = find_best_assignment(tasks, assignments, map)
+        best_assignment, best_cost = find_best_assignment(tasks, assignments, world_map)
 
         rospy.loginfo('Info[greedy_task_assignment_node.assign]: Publishing assignments...')
         for task, robot in best_assignment:
             message = TaskAssignmentAction()
             message.header.stamp = rospy.Time.now()
             message.header.frame_id = "/greedy_task_assignment_node"
-            message.robot_id = robot.id
-            message.task_request = task.task_request
+            message.robot_id = robot.get_name()
+            message.task_request = task.get_task_request()
 
             rospy.loginfo('Info[greedy_task_assignment_node.assign]: Publishing the assignment: %s', message)
             PUBLISHER.publish(message)

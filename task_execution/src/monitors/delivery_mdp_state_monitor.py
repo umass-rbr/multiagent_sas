@@ -9,9 +9,9 @@ from task_execution.msg import DeliveryMdpState
 
 # TODO Implement this function 
 def get_location():
-    with open('/home/justin/Documents/Development/catkin_ws/src/task_execution/src/tmp/lgrc.json') as f:
-        map = json.load(f)
-        return random.choice(map["locations"].keys())
+    with open('/home/justin/Documents/Development/catkin_ws/src/task_execution/src/tmp/lgrc.json') as world_map_file:
+        world_map = json.load(world_map_file)
+        return random.choice(world_map["locations"].keys())
 
 
 # TODO Implement this function 

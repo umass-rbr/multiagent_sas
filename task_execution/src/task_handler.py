@@ -3,8 +3,8 @@ from mdps.escort_mdp import EscortMDP
 
 
 class DeliveryTaskHandler(object):
-    def get_problem(self, map, task_data):
-        return DeliveryMDP(map, task_data["pickup_location"], task_data["dropoff_location"])
+    def get_problem(self, world_map, task_data):
+        return DeliveryMDP(world_map, task_data["pickup_location"], task_data["dropoff_location"])
 
     def get_solution(self, problem):
         return problem.solve()
@@ -22,8 +22,8 @@ class DeliveryTaskHandler(object):
 
 
 class EscortTaskHandler(object):
-    def get_problem(self, map, task_data):
-        return EscortMDP(map, task_data["pickup_location"], task_data["dropoff_location"])
+    def get_problem(self, world_map, task_data):
+        return EscortMDP(world_map, task_data["pickup_location"], task_data["dropoff_location"])
 
     def get_solution(self, problem):
         return problem.solve()

@@ -19,7 +19,7 @@ class DeliveryTask(Task):
 
 
 class EscortTask(Task):
-    def __init__(self, id,  start_time, end_time, task_request, person, pickup_location, dropoff_location, task_type='escort'):
+    def __init__(self, id, start_time, end_time, task_request, person, pickup_location, dropoff_location, task_type='escort'):
         super(EscortTask, self).__init__(id, task_type, start_time, end_time, task_request)
         self.person = person
         self.pickup_location = pickup_location

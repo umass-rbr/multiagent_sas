@@ -8,12 +8,12 @@ class RobotType(Enum):
 
 
 class Robot(object):
-    def __init__(self, id, type):
-        self.id = id
+    def __init__(self, name, type):
+        self.name = name
         self.type = type
 
-    def get_id(self):
-        return self.id
+    def get_name(self):
+        return self.name
 
     def get_break_probability(self, start_location, end_location):
         if self.type == RobotType.TURTLEBOT:
@@ -24,8 +24,8 @@ class Robot(object):
 
         return 0
 
-    def get_time_duration(self, map, start_location, end_location):
-        cost = map['paths'][start_location][end_location]['cost']
+    def get_time_duration(self, world_map, start_location, end_location):
+        cost = world_map['paths'][start_location][end_location]['cost']
 
         if self.type == RobotType.TURTLEBOT:
             return 2 * cost if start_location != end_location else cost

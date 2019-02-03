@@ -34,9 +34,9 @@ def escort_mdp_state_callback(message):
     escort_mdp_state_message = message
 
 
-def get_map(task_assignment):
-    with open('/home/justin/Documents/Development/catkin_ws/src/task_execution/src/tmp/lgrc.json') as f:
-        return json.load(f)
+def get_world_map():
+    with open('/home/justin/Documents/Development/catkin_ws/src/task_execution/src/tmp/lgrc.json') as world_map_file:
+        return json.load(world_map_file)
 
 
 def execute(task_assignment):
@@ -52,10 +52,10 @@ def execute(task_assignment):
         task_data = json.loads(task_assignment.task_request.data)
 
         rospy.loginfo("Info[task_execution_node.execute]: Retrieving the map...")
-        map = get_map(task_assignment)
+        world_map = get_world_map()
 
         rospy.loginfo("Info[task_execution_node.execute]: Generating the problem...")
-        problem = task_handler.get_problem(map, task_data)
+        problem = task_handler.get_problem(world_map, task_data)
 
         rospy.loginfo("Info[task_execution_node.execute]: Solving the problem...")
         solution = task_handler.get_solution(problem)
@@ -81,9 +81,9 @@ def execute(task_assignment):
                 action_message = TaskExecutionAction()
                 action_message.header.stamp = rospy.Time.now()
                 action_message.header.frame_id = "/task_execution_node"
-                action_message.x = map["locations"][current_action]["pose"]["x"]
-                action_message.y = map["locations"][current_action]["pose"]["y"]
-                action_message.theta = map["locations"][current_action]["pose"]["theta"]
+                action_message.x = world_map["locations"][current_action]["pose"]["x"]
+                action_message.y = world_map["locations"][current_action]["pose"]["y"]
+                action_message.theta = world_map["locations"][current_action]["pose"]["theta"]
 
                 activation_time = rospy.Time.now()
 
@@ -97,8 +97,6 @@ def execute(task_assignment):
             rospy.sleep(wait_duration)
 
 
-# TODO Implement the request to the map service
-# TODO Rename everything across all files
 def main():
     rospy.init_node("task_execution_node", anonymous=True)
     rospy.loginfo("Info[task_execution_node.main]: Instantiated the task_execution node")
