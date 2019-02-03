@@ -10,7 +10,7 @@ def get_tasks():
 
 
 # TODO Implement this function 
-def get_robot_statuses():
+def get_robot_status():
     return True
 
 
@@ -25,7 +25,7 @@ def main():
     while not rospy.is_shutdown():
         message = WorldState()
         message.tasks = get_tasks()
-        message.robot_status = get_robot_statuses()
+        message.robot_status = get_robot_status()
 
         rospy.loginfo(message)
         publisher.publish(message)

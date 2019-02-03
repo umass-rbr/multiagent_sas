@@ -23,13 +23,14 @@ TASK_MAP = {
     }
 }
 
+# TODO Implement a topic or service that has this information
 PUMPKIN = Robot('pumpkin', RobotType.TURTLEBOT)
 JAKE = Robot('jake', RobotType.JACKAL)
 SHLOMO = Robot('human', RobotType.HUMAN)
 ROBOTS = [PUMPKIN, JAKE, SHLOMO]
 
 
-def get_map():
+def get_map(world_state):
     with open('/home/justin/Documents/Development/catkin_ws/src/task_assignment/src/tmp/lgrc.json') as f:
         return json.load(f)
 
@@ -64,6 +65,7 @@ def generate_assignments(tasks, robots):
     return feasible_assignments
 
 
+# TODO Abstract out the details of a task
 def calculate_expected_cost(assignment, map):
     cost = 0
 
@@ -108,39 +110,36 @@ def assign(world_state):
     tasks = get_tasks(world_state.task_requests)
     available_robots = get_available_robots(world_state.robot_status)
 
-    map = get_map()
+    map = get_map(world_state)
 
     if available_robots:
-        rospy.loginfo('Info[task_assignment_node.assign]: Generating tasks assignments...')
+        rospy.loginfo('Info[greedy_task_assignment_node.assign]: Generating tasks assignments...')
         assignments = generate_assignments(tasks, available_robots)
 
-        rospy.loginfo('Info[task_assignment_node.assign]: Determining best assignments...')
+        rospy.loginfo('Info[greedy_task_assignment_node.assign]: Determining best assignments...')
         best_assignment, best_cost = find_best_assignment(tasks, assignments, map)
         
-        rospy.loginfo('Info[task_assignment_node.assign]: Publishing assignments...')
+        rospy.loginfo('Info[greedy_task_assignment_node.assign]: Publishing assignments...')
         for task, robot in best_assignment:
             message = TaskAssignmentAction()
             message.header.stamp = rospy.Time.now()
-            message.header.frame_id = "/task_assigner_node"
+            message.header.frame_id = "/greedy_task_assignment_node"
             message.robot_id = robot.get_id()
             message.task_request = task.get_task_request()
 
-            rospy.loginfo('Info[task_assignment_node.assign]: Publishing the assignment: %s', message)
+            rospy.loginfo('Info[greedy_task_assignment_node.assign]: Publishing the assignment: %s', message)
             PUBLISHER.publish(message)
-
-        rate = rospy.Rate(10)
-        rate.sleep()
 
     return best_assignment, best_cost
 
 
 def main():
     rospy.init_node('task_assigner_node', anonymous=True)
-    rospy.loginfo('Info[task_assignment_node.main]: Instantiated the task_assignment node')
+    rospy.loginfo('Info[greedy_task_assignment_node.main]: Instantiated the task_assignment node')
 
     rospy.Subscriber('monitor/world_state', WorldState, assign, queue_size=1)
 
-    rospy.loginfo('Info[task_assignment_node.main]: Spinning...')
+    rospy.loginfo('Info[greedy_task_assignment_node.main]: Spinning...')
     rospy.spin()
 
 
