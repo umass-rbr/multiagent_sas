@@ -9,14 +9,18 @@ import rospy
 
 import utils
 from robot import Robot, RobotType
-from task import DeliveryTask, EscortTask
-from task_assignment.msg import TaskAssignmentAction, WorldState
+from task_assignment.msg import TaskAssignmentAction, TaskRequest, WorldState
+from task_handler import DeliveryTaskHandler, EscortTaskHandler
 
 PUBLISHER = rospy.Publisher('task_assignment/task_assignment_action', TaskAssignmentAction, queue_size=1)
 
 TASK_MAP = {
-    'delivery': DeliveryTask,
-    'escort': EscortTask
+    'delivery': {
+        'task_handler': DeliveryTaskHandler()
+    },
+    'escort': {
+        'task_handler': EscortTaskHandler()
+    }
 }
 
 PUMPKIN = Robot('pumpkin', RobotType.TURTLEBOT)
@@ -60,54 +64,49 @@ def generate_assignments(tasks, robots):
     return feasible_assignments
 
 
-def calculate_expected_assignment_cost(assignment, map):
+def calculate_expected_cost(assignment, map):
     cost = 0
 
     for task, robot in assignment:
         break_probability = robot.get_break_probability(task.pickup_location, task.dropoff_location)
-        time = robot.calculate_time(map, task.pickup_location, task.dropoff_location)
-        cost += 1000 * break_probability + (time * (1 - break_probability))
+        time = robot.get_time_duration(map, task.pickup_location, task.dropoff_location)
+        cost += 1000 * break_probability + time * (1 - break_probability)
 
     return cost
 
 
 def find_best_assignment(tasks, assignments, map):
-    best_cost = float('inf')
     best_assignment = None
+    best_expected_cost = float('inf')
 
     for assignment in assignments:
-        exp_cost = calculate_expected_assignment_cost(assignment, map) + 1000 * (len(tasks) - len(assignment))
+        expected_cost = calculate_expected_cost(assignment, map) + 1000 * (len(tasks) - len(assignment))
         
-        if exp_cost < best_cost:
-            best_cost = exp_cost
+        if expected_cost < best_expected_cost:
             best_assignment = assignment
+            best_expected_cost = expected_cost
 
-    return best_assignment, best_cost
-
-
-def assignment_to_json(assignment):
-    assignment_dict = {}
-
-    for task, robot in assignment:
-        assignment_dict[robot] = str(task)
-
-    return json.dumps(assignment_dict, indent=4)
+    return best_assignment, best_expected_cost
 
 
-def unpack_tasks(tasks_as_dict):
-    T = []
+def get_tasks(task_requests):
+    tasks = []
 
-    for task in tasks_as_dict.values():
-        T.append(TASK_MAP[task['task_type']](**task))
+    for task_request in task_requests:
+        task_handler = TASK_MAP[task_request.type]['task_handler']
+        task = task_handler.get_task(task_request.id, task_request.start_time, task_request.end_time, task_request, json.loads(task_request.data))
+        tasks.append(task)
 
-    return T
+    return tasks
+
+
+def get_available_robots(robot_status):
+    return [robot for i, robot in enumerate(ROBOTS) if robot_status[i]]
 
         
-def assign(message):
-    tasks = unpack_tasks(json.loads(message.tasks))
-    robot_status = message.robot_status
-
-    available_robots = [robot for i, robot in enumerate(ROBOTS) if robot_status[i]]
+def assign(world_state):
+    tasks = get_tasks(world_state.task_requests)
+    available_robots = get_available_robots(world_state.robot_status)
 
     map = get_map()
 
@@ -121,9 +120,10 @@ def assign(message):
         rospy.loginfo('Info[task_assignment_node.assign]: Publishing assignments...')
         for task, robot in best_assignment:
             message = TaskAssignmentAction()
+            message.header.stamp = rospy.Time.now()
+            message.header.frame_id = "/task_assigner_node"
             message.robot_id = robot.get_id()
-            message.task_type = task.get_type()
-            message.task_data = task.pack()
+            message.task_request = task.get_task_request()
 
             rospy.loginfo('Info[task_assignment_node.assign]: Publishing the assignment: %s', message)
             PUBLISHER.publish(message)
@@ -143,30 +143,6 @@ def main():
     rospy.loginfo('Info[task_assignment_node.main]: Spinning...')
     rospy.spin()
 
-
-def test():
-    t1 = DeliveryTask(0,'package1','shlomoOffice','AMRL','0','3')
-    t2 = DeliveryTask(1,'package2','AMRL','shlomoOffice','0','2')
-    t3 = DeliveryTask(2,'package3','AMRL','mailroom','1','4')
-    t4 = DeliveryTask(3,'package4','shlomoOffice','mailroom','3','4')
-
-    T = {}
-
-    T[1] = t1.pack()
-    T[2] = t2.pack()
-    T[3] = t3.pack()
-    T[4] = t4.pack()
-
-    T2 = unpack_tasks(T)
-    print(T2)
-    quit()
-
-    T = [t1,t2,t3,t4]
-
-    assignment,cost = assign(T)
-
-    print(assignment_to_json(assignment))
-    print(cost)
 
 if __name__ == '__main__':
     main()

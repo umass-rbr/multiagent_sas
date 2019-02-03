@@ -1,3 +1,3 @@
 Header header
-string tasks
+TaskRequest[] task_requests
 bool[] robot_status

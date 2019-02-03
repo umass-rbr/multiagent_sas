@@ -13,9 +13,6 @@ class Robot():
     def get_id(self):
         return self.id
 
-    def get_type(self):
-        return self.type
-
     def get_break_probability(self, l1, l2):
         if self.type == RobotType.TURTLEBOT:
             return 0.2 if l1 != l2 else 0.05
@@ -25,7 +22,7 @@ class Robot():
 
         return 0
 
-    def calculate_time(self, map, l1, l2):
+    def get_time_duration(self, map, l1, l2):
         cost = map['paths'][l1][l2]['cost']
         
         if self.type == RobotType.TURTLEBOT:

@@ -1,4 +1,3 @@
 Header header
 string robot_id
-string task_type
-string task_data 
+TaskRequest task_request
