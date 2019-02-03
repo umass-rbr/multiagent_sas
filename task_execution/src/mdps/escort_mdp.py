@@ -1,8 +1,11 @@
 import ctypes
+import json
 import os
 import sys
 
 import numpy as np
+
+import simulator
 
 current_file_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(current_file_path, "..", "..", "..", "..", "..", "nova", "python"))
@@ -14,12 +17,12 @@ from nova.mdp_vi import MDPVI
 
 # TODO Implement a pretty print function
 class EscortMDP(object):
-    def __init__(self, map, pickup_location, dropoff_location):
-        self.map = map
+    def __init__(self, world_map, pickup_location, dropoff_location):
+        self.world_map = world_map
         self.pickup_location = pickup_location
         self.dropoff_location = dropoff_location
 
-        self.name = "escort-mdp-{}-{}-{}".format(self.map["name"], self.pickup_location, self.dropoff_location)
+        self.name = "escort-mdp-{}-{}-{}".format(self.world_map["name"], self.pickup_location, self.dropoff_location)
         
         self.state_map = None
         self.action_map = None
@@ -41,25 +44,25 @@ class EscortMDP(object):
         self.mdp.s0 = int(self.mdp.n / (self.mdp.horizon + 1) - 1)
         self.mdp.ng = 0
 
-        S, T = self._compute_state_transitions()
+        self.S, self.T = self._compute_state_transitions()
         array_type_nmns_int = ctypes.c_int * (self.mdp.n * self.mdp.m * self.mdp.ns)
         array_type_nmns_float = ctypes.c_float * (self.mdp.n * self.mdp.m * self.mdp.ns)
-        self.mdp.S = array_type_nmns_int(*np.array(S).flatten())
-        self.mdp.T = array_type_nmns_float(*np.array(T).flatten())
+        self.mdp.S = array_type_nmns_int(*np.array(self.S).flatten())
+        self.mdp.T = array_type_nmns_float(*np.array(self.T).flatten())
 
-        R = self._compute_rewards()
+        self.R = self._compute_rewards()
         array_type_nm_float = ctypes.c_float * (self.mdp.n * self.mdp.m)
-        self.mdp.R = array_type_nm_float(*np.array(R).flatten())
-        self.mdp.Rmax = float(np.array(R).max())
-        self.mdp.Rmin = float(np.array(R).min())
+        self.mdp.R = array_type_nm_float(*np.array(self.R).flatten())
+        self.mdp.Rmax = float(np.array(self.R).max())
+        self.mdp.Rmin = float(np.array(self.R).min())
 
     def _compute_states(self):
-        location_states = self.map["locations"].keys()
+        location_states = self.world_map["locations"].keys()
         has_package_states = [True, False]
         return [(location, has_package) for location in location_states for has_package in has_package_states]
 
     def _compute_actions(self):
-        return self.map["locations"].keys() + ["pickup"]
+        return self.world_map["locations"].keys() + ["pickup"]
 
     def _compute_state_transitions(self):
         S = [[[-1 for sp in range(self.mdp.ns)] for a in range(self.mdp.m)] for s in range(self.mdp.n)]
@@ -67,7 +70,7 @@ class EscortMDP(object):
 
         for s, state in enumerate(self.states):
             for a, action in enumerate(self.actions):
-                if state[0] == self.dropoff_location and state[1] == True:
+                if state[0] == self.dropoff_location and state[1]:
                     T[s][a][s] = 1.0
                     continue
 
@@ -75,13 +78,13 @@ class EscortMDP(object):
                     S[s][a][sp] = sp
 
                     if action == "pickup":
-                        if state[0] == self.pickup_location and state[0] == statePrime[0] and state[1] == False and statePrime[1] == True:
+                        if state[0] == self.pickup_location and state[0] == statePrime[0] and not state[1] and statePrime[1]:
                             T[s][a][sp] = 1.0
                             break
                         else:
                             continue
 
-                    if self.map["paths"][state[0]].has_key(action):
+                    if action in self.world_map["paths"][state[0]]:
                         if statePrime[0] == action and state[1] == statePrime[1]:
                             T[s][a][sp] = 1.0
                             break
@@ -94,11 +97,11 @@ class EscortMDP(object):
         for s, state in enumerate(self.states):
             for a, action in enumerate(self.actions):
 
-                if action is not "pickup":
-                    if not self.map["paths"][state[0]].has_key(action):
-                        R[s][a] = float("-inf")
+                if action != "pickup":
+                    if action in self.world_map["paths"][state[0]]:
+                        R[s][a] -= self.world_map["paths"][state[0]][action]['cost']
                     else:
-                        R[s][a] -= self.map["paths"][state[0]][action]['cost']
+                        R[s][a] = float("-inf")
 
         return R
 
@@ -142,3 +145,20 @@ class EscortMDP(object):
             "action_map": self._generate_action_map(),
             "policy": self._generate_policy()
         }
+
+    def is_goal(self, state):
+        return state[0] == self.dropoff_location and state[1]
+
+
+def main():
+    with open('../tmp/lgrc.json') as world_map_file:
+        world_map = json.load(world_map_file)
+
+        escort_mdp = EscortMDP(world_map, 'shlomoOffice', 'AMRL')
+        initial_state = ('mailroom', False)
+        
+        simulator.simulate(escort_mdp, initial_state)
+
+
+if __name__ == '__main__':
+    main()
