@@ -1,6 +1,3 @@
-import json
-
-
 class Task(object):
     def __init__(self, id, type, start_time, end_time, task_request):
         self.id = id
@@ -19,7 +16,7 @@ class DeliveryTask(Task):
         self.package = package
         self.pickup_location = pickup_location
         self.dropoff_location = dropoff_location
-        
+
 
 class EscortTask(Task):
     def __init__(self, id,  start_time, end_time, task_request, person, pickup_location, dropoff_location, task_type='escort'):
