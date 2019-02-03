@@ -1,16 +1,13 @@
 # multiagent_sas
 Multiagent semi-autonomous systems (SAS) for campus delivery robots.
 
-## TODO
-* Modify the TaskAssignment object
+## Questions
 * Should we have different messages for each task?
-* Implement getters and setters using best practices
-* Apply PEP8 or Google style guidelines throughout the code
+* Should I implement getters and setters as properties?
 * Do I like how I'm passing around the TaskRequest object?
-* Is there a better name for WorldState?
-* Why's the expected cost tied to the implementation of a task?
-* Refactor project to fit with Kyle's suggestions
-* Make sure you address the TODOs throughout the code
+* Is there a better name than WorldState?
+* Why does the function calculate_expected_cost() rely on the implementation of a task?
+* Should we refactor the code to fit with Kyle's structure?
 * Create an action execution map
 
 ## Important Commands

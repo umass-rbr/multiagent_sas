@@ -48,7 +48,7 @@ def execute(task_assignment):
     timeout_duration = rospy.get_param('/task_execution_node/timeout_duration')
 
     if task_assignment.robot_id == robot_id:
-        task_handler = TASK_MAP[task_assignment.task_request.type]["task_handler"]
+        task_handler = TASK_MAP[task_assignment.task_request. type]["task_handler"]
         message_selector = TASK_MAP[task_assignment.task_request.type]["message_selector"]
         task_data = json.loads(task_assignment.task_request.data)
 
@@ -57,7 +57,7 @@ def execute(task_assignment):
 
         rospy.loginfo("Info[task_execution_node.execute]: Generating the problem...")
         problem = task_handler.get_problem(map, task_data)
-                    
+
         rospy.loginfo("Info[task_execution_node.execute]: Solving the problem...")
         solution = task_handler.get_solution(problem)
 
@@ -66,7 +66,7 @@ def execute(task_assignment):
         policy = solution["policy"]
 
         current_state = None
-        
+
         while not task_handler.is_goal(current_state, task_data):
             rospy.loginfo("Info[task_execution_node.execute]: Retrieving the current state...")
             state_message = message_selector()
@@ -74,7 +74,7 @@ def execute(task_assignment):
 
             if new_state != current_state:
                 current_state = new_state
-                
+
                 state_index = state_map[current_state]
                 action_index = policy[state_index]
                 current_action = action_map[action_index]
@@ -90,7 +90,7 @@ def execute(task_assignment):
 
                 rospy.loginfo("Info[task_execution_node.execute]: Publishing the action: %s", action_message)
                 PUBLISHER.publish(action_message)
-            
+
             current_time = rospy.Time.now()
             if current_time - activation_time > rospy.Duration(timeout_duration):
                 raise RuntimeError("Exceeded the time limit to execute the task")
@@ -106,7 +106,7 @@ def main():
 
     rospy.Subscriber("monitor/delivery_mdp_state", DeliveryMdpState, delivery_mdp_state_callback, queue_size=1)
     rospy.Subscriber("monitor/escort_mdp_state", EscortMdpState, escort_mdp_state_callback, queue_size=1)
-    rospy.Subscriber("task_assignment/task_assignment_action", TaskAssignmentAction, execute, queue_size=1)
+    rospy.Subscriber("task_assignment/task_assignment_action", TaskAssignmentAction, execute,queue_size=1)
 
     rospy.loginfo("Info[task_execution_node.main]: Spinning...")
     rospy.spin()

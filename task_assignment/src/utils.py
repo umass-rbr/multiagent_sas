@@ -1,5 +1,6 @@
 import itertools as it
 
+
 def get_cartesian_product(A, B):
     return [(a, b) for a in A for b in B]
 

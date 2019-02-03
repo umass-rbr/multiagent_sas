@@ -1,9 +1,11 @@
 from enum import Enum 
 
+
 class RobotType(Enum):
     TURTLEBOT = 0
     JACKAL = 1
     HUMAN = 2
+
 
 class Robot():
     def __init__(self, id, type):

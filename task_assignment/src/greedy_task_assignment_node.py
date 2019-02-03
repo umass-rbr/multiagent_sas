@@ -65,7 +65,6 @@ def generate_assignments(tasks, robots):
     return feasible_assignments
 
 
-# TODO Abstract out the details of a task
 def calculate_expected_cost(assignment, map):
     cost = 0
 
@@ -124,8 +123,8 @@ def assign(world_state):
             message = TaskAssignmentAction()
             message.header.stamp = rospy.Time.now()
             message.header.frame_id = "/greedy_task_assignment_node"
-            message.robot_id = robot.get_id()
-            message.task_request = task.get_task_request()
+            message.robot_id = robot.id
+            message.task_request = task.task_request
 
             rospy.loginfo('Info[greedy_task_assignment_node.assign]: Publishing the assignment: %s', message)
             PUBLISHER.publish(message)
