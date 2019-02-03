@@ -1,12 +1,7 @@
 #!/usr/bin/env python
-import datetime
 import json
-import os
-import sys
 
-import numpy as np
 import rospy
-
 import utils
 from robot import Robot, RobotType
 from task_assignment.msg import TaskAssignmentAction, TaskRequest, WorldState
@@ -30,9 +25,9 @@ SHLOMO = Robot('human', RobotType.HUMAN)
 ROBOTS = [PUMPKIN, JAKE, SHLOMO]
 
 
-def get_map(world_state):
-    with open('/home/justin/Documents/Development/catkin_ws/src/task_assignment/src/tmp/lgrc.json') as f:
-        return json.load(f)
+def get_map():
+    with open('/home/justin/Documents/Development/catkin_ws/src/task_assignment/src/tmp/lgrc.json') as map_file:
+        return json.load(map_file)
 
 
 def generate_assignments(tasks, robots):
@@ -44,7 +39,7 @@ def generate_assignments(tasks, robots):
     feasible_assignments = []
     for assignment in trimmed_assignments:
         is_feasible = True
-        
+
         is_task_used = [False for _ in tasks]
         is_robot_used = [False for _ in robots]
 
@@ -59,7 +54,7 @@ def generate_assignments(tasks, robots):
             is_task_used[task_index] = True
             is_robot_used[robot_index] = True
 
-        if is_feasible: 
+        if is_feasible:
             feasible_assignments.append(assignment)
 
     return feasible_assignments
@@ -82,7 +77,7 @@ def find_best_assignment(tasks, assignments, map):
 
     for assignment in assignments:
         expected_cost = calculate_expected_cost(assignment, map) + 1000 * (len(tasks) - len(assignment))
-        
+
         if expected_cost < best_expected_cost:
             best_assignment = assignment
             best_expected_cost = expected_cost
@@ -104,12 +99,12 @@ def get_tasks(task_requests):
 def get_available_robots(robot_status):
     return [robot for i, robot in enumerate(ROBOTS) if robot_status[i]]
 
-        
+
 def assign(world_state):
     tasks = get_tasks(world_state.task_requests)
     available_robots = get_available_robots(world_state.robot_status)
 
-    map = get_map(world_state)
+    map = get_map()
 
     if available_robots:
         rospy.loginfo('Info[greedy_task_assignment_node.assign]: Generating tasks assignments...')
@@ -117,7 +112,7 @@ def assign(world_state):
 
         rospy.loginfo('Info[greedy_task_assignment_node.assign]: Determining best assignments...')
         best_assignment, best_cost = find_best_assignment(tasks, assignments, map)
-        
+
         rospy.loginfo('Info[greedy_task_assignment_node.assign]: Publishing assignments...')
         for task, robot in best_assignment:
             message = TaskAssignmentAction()

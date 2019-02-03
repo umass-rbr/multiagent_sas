@@ -21,7 +21,7 @@ def main():
     publisher = rospy.Publisher("monitor/world_state", WorldState)
 
     rate = rospy.Rate(rospy.get_param("/world_state_monitor/rate"))
-    
+
     while not rospy.is_shutdown():
         message = WorldState()
         message.tasks = get_tasks()

@@ -26,7 +26,7 @@ def main():
     publisher = rospy.Publisher("monitor/escort_mdp_state", EscortMdpState, queue_size=10)
 
     rate = rospy.Rate(rospy.get_param("/escort_mdp_state_monitor/rate"))
-    
+
     while not rospy.is_shutdown():
         message = EscortMdpState()
         message.header.stamp = rospy.Time.now()
