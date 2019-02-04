@@ -52,13 +52,12 @@ def power_set(iterable):
 class RouteMDP(object):
     """ The high-level route MDP that decides path for delivery. """
 
-    def __init__(self, initialNode, goalNode, mapNumber):
+    def __init__(self, initialNode, goalNode, mapName):
         """ The constructor for the RouteMDP object. """
 
         self.initialNode = initialNode
         self.goalNode = goalNode
-        # The map of campus as a dictionary
-        self.map = campus_map.generate_map(mapNumber)
+        self.map = campus_map.load_json_map(mapName)
         self.control = ["inControl", "noControl"]
         self.tocCost = 10
 
@@ -382,7 +381,7 @@ class RouteMDP(object):
         R = self._compute_rewards()
         S, T = self._compute_state_transitions()
         self.execute_reset()
-        while self.execute_get_state()[0] < self.mdp.horizon:
+        while self.execute_get_state()[0] != self.goalNode:
             s = self.currentState
             a = self.policy.action(self.currentState)
             self.execute_take_action(a)
@@ -398,42 +397,17 @@ class RouteMDP(object):
                   "Reward: " + str(reward) + "\n" +
                   "*******\n")
 
-            if s == self.currentState or len(self.execute_get_state()[1]) == 0:
-                break
-
-        return (self.currentState, reward)
-
-        reward = 0
-        self.execute_reset()
-        while self.execute_get_state()[0] < self.mdp.horizon:
-            s = self.currentState
-            a = self.policy.action(self.currentState)
-
-            if not (self.execute_take_action(a)):
-                print("Error in executing action " + str(a))
-
-            reward += self.R_full[s][a][self.currentState]
-
-            print("*******\n" +
-                  "s: " + str(s) + " | " + str(self.states[s]) + "\n" +
-                  "a: " + str(a) + " | " + "\n" +
-                  "sp: " + str(self.currentState) + " | " + str(self.execute_get_state()) + "\n" +
-                  "T[s][a][sp]: " + str(self.T[s][a][self.currentState]) + "\n" +
-                  "Reward: " + str(reward) + "\n" +
-                  "*******\n")
-
-            # If in goal state, end the simulation.
-            if s == (self.goalNode, "none"):
+            if s == self.currentState or self.execute_get_state()[0] == self.goalNode:
                 break
 
         return (self.currentState, reward)
 
 
 if __name__ == "__main__":
-    initialNode = 0
-    goalNode = 4
-    mapNumber = 0
-    route = RouteMDP(initialNode, goalNode, mapNumber)
+    initialNode = "shlomoOffice"
+    goalNode = "mailroom"
+    mapName = "map.json"
+    route = RouteMDP(initialNode, goalNode, mapName)
     route.initialize()
     route.solve()
     route.simulate()
