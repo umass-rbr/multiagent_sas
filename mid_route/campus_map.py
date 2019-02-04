@@ -3,8 +3,41 @@ import json
 
 # loads a given map in json format
 def load_map_json(fileName):
-	with open('data.json') as f:
-    data = json.load(f)
+
+    with open(fileName) as f:
+        data = json.load(f)
+
+    for attribute in data:
+        if attribute == "paths":
+            mapPaths = data[attribute]
+
+    loadedMap = dict()
+
+    for location in mapPaths.keys():
+
+        locationEdges = mapPaths[location]
+
+        # edge connections include the destination, cost, and obstruction
+        edgeConnections = []
+
+        for destination in locationEdges.keys():
+
+            destinationName = destination     
+
+            for destinationAttribute in locationEdges[destination]:
+
+                if destinationAttribute == "cost":
+                    destinationCost = locationEdges[destination][destinationAttribute]
+
+                elif destinationAttribute == "obstruction":
+                    destinationObstruction = locationEdges[destination][destinationAttribute]
+
+            edgeConnections.append( (destinationName, destinationCost, destinationObstruction) )
+
+        loadedMap[location] = edgeConnections
+
+    return loadedMap
+
 
 # generates a number of arbitrary maps for testing purposes
 def generate_map(map_number):
@@ -17,8 +50,8 @@ def generate_map(map_number):
     '''
         keys represent nodes on directed graph to other connected nodes
         values represent list of destination nodes and the cost for travel 
-        items in value are -- (destination, cost, obstacle)
-        cost: 2 downhill, 4 level, 6 uphill, 10 obstacle
+        items in value are -- (destination, cost, obstruction)
+        cost: 2 downhill, 4 level, 6 uphill, 10 obstruction
         obstacles include: crosswalk, door
     '''
 
@@ -28,14 +61,14 @@ def generate_map(map_number):
     ]
     campus_maps[0][1] = [
         (0, 4, "none"),
-        (2, 10, "crosswalk")
+        (2, 4, "crosswalk")
     ]
     campus_maps[0][2] = [
-        (1, 10, "crosswalk"),
-        (3, 10, "door")
+        (1, 4, "crosswalk"),
+        (3, 4, "door")
     ]
     campus_maps[0][3] = [
-        (2, 10, "door"),
+        (2, 4, "door"),
         (4, 4, "none")
 
     ]
@@ -103,13 +136,4 @@ def generate_map(map_number):
 
 
 if __name__ == "__main__":
-	pass
-
-
-
-
-
-
-
-
-
+    load_map_json("map.json")

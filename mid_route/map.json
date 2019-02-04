@@ -29,7 +29,8 @@
     "paths": {
         "shlomoOffice": {
             "amrl": { 
-                "cost": 69
+                "cost": 69,
+                "obstruction": "none"
             },
             "mailroom": { 
                 "cost": 42,
@@ -38,7 +39,8 @@
         },
         "amrl": {
             "shlomoOffice": { 
-                "cost": 69
+                "cost": 69,
+                "obstruction": "none"
             },
             "mailroom": { 
                 "cost": 42,
