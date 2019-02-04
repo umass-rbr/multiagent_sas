@@ -1,3 +1,12 @@
+import json
+
+
+# loads a given map in json format
+def load_map_json(fileName):
+	with open('data.json') as f:
+    data = json.load(f)
+
+# generates a number of arbitrary maps for testing purposes
 def generate_map(map_number):
 
     # initializing the different campus maps
@@ -91,3 +100,16 @@ def generate_map(map_number):
 
     # return selected map
     return campus_maps[map_number]
+
+
+if __name__ == "__main__":
+	pass
+
+
+
+
+
+
+
+
+
