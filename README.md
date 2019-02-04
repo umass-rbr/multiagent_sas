@@ -1,4 +1,4 @@
-# multiagent_sas
+# multiagent-sas
 Multiagent semi-autonomous systems (SAS) for campus delivery robots.
 
 ## Tasks
