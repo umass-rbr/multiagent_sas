@@ -29,31 +29,31 @@
     "paths": {
         "shlomoOffice": {
             "amrl": { 
-                "cost": 69,
+                "cost": 4,
                 "obstruction": "none"
             },
             "mailroom": { 
-                "cost": 42,
+                "cost": 4,
                 "obstruction": "door"
             }
         },
         "amrl": {
             "shlomoOffice": { 
-                "cost": 69,
+                "cost": 4,
                 "obstruction": "none"
             },
             "mailroom": { 
-                "cost": 42,
+                "cost": 4,
                 "obstruction": "door"
             }
         },
         "mailroom": {
             "shlomoOffice": { 
-                "cost": 69,
+                "cost": 4,
                 "obstruction": "door"
             },
             "amrl": { 
-                "cost": 69,
+                "cost": 4,
                 "obstruction": "door"
             }
         }
