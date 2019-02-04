@@ -20,11 +20,10 @@ def with_person():
 
 
 def main():
+    rospy.loginfo("Info[escort_mdp_state_monitor.main]: Instantiating the escort_mdp_state_monitor node...")
     rospy.init_node("escort_mdp_state_monitor", anonymous=True)
-    rospy.loginfo("Info[escort_mdp_state_monitor.main]: Instantiated the escort_mdp_state_monitor node")
 
     publisher = rospy.Publisher("monitor/escort_mdp_state", EscortMdpState, queue_size=10)
-
     rate = rospy.Rate(rospy.get_param("/escort_mdp_state_monitor/rate"))
 
     while not rospy.is_shutdown():

@@ -5,9 +5,10 @@ import rospy
 
 from task_handler import DeliveryTaskHandler, EscortTaskHandler
 from task_assignment.msg import TaskAssignmentAction
-from task_execution.msg import DeliveryMdpState, EscortMdpState, TaskExecutionAction
+from task_execution.msg import DeliveryMdpState, EscortMdpState, InterfaceAction, NavigationAction
 
-PUBLISHER = rospy.Publisher("task_execution/task_execution_action", TaskExecutionAction, queue_size=1)
+NAVIGATION_ACTION_PUBLISHER = rospy.Publisher("task_execution/navigation_action", NavigationAction, queue_size=1)
+INTERFACE_ACTION_PUBLISHER = rospy.Publisher("task_execution/interface_action", InterfaceAction, queue_size=1)
 
 TASK_MAP = {
     "delivery": {
@@ -68,8 +69,7 @@ def execute(task_assignment):
 
         while not task_handler.is_goal(current_state, task_data):
             rospy.loginfo("Info[task_execution_node.execute]: Retrieving the current state...")
-            state_message = message_selector()
-            new_state = task_handler.get_state(state_message)
+            new_state = task_handler.get_state(message_selector())
 
             if new_state != current_state:
                 current_state = new_state
@@ -78,17 +78,25 @@ def execute(task_assignment):
                 action_index = policy[state_index]
                 current_action = action_map[action_index]
 
-                action_message = TaskExecutionAction()
-                action_message.header.stamp = rospy.Time.now()
-                action_message.header.frame_id = "/task_execution_node"
-                action_message.x = world_map["locations"][current_action]["pose"]["x"]
-                action_message.y = world_map["locations"][current_action]["pose"]["y"]
-                action_message.theta = world_map["locations"][current_action]["pose"]["theta"]
-
+                if current_action == "pickup":
+                    action_message = InterfaceAction()
+                    action_message.header.stamp = rospy.Time.now()
+                    action_message.header.frame_id = "/task_execution_node"
+                    action_message.command = "Please place the package on me."
+                    INTERFACE_ACTION_PUBLISHER.publish(action_message)
+                else:
+                    action_message = NavigationAction()
+                    action_message.header.stamp = rospy.Time.now()
+                    action_message.header.frame_id = "/task_execution_node"
+                    action_message.x = world_map["locations"][current_action]["pose"]["x"]
+                    action_message.y = world_map["locations"][current_action]["pose"]["y"]
+                    action_message.theta = world_map["locations"][current_action]["pose"]["theta"]
+                    NAVIGATION_ACTION_PUBLISHER.publish(action_message)
+                
+                rospy.loginfo("Info[task_execution_node.execute]: Published the action: %s", action_message)
+                
                 activation_time = rospy.Time.now()
 
-                rospy.loginfo("Info[task_execution_node.execute]: Publishing the action: %s", action_message)
-                PUBLISHER.publish(action_message)
 
             current_time = rospy.Time.now()
             if current_time - activation_time > rospy.Duration(timeout_duration):
@@ -98,8 +106,8 @@ def execute(task_assignment):
 
 
 def main():
+    rospy.loginfo("Info[task_execution_node.main]: Instantiating the task_execution node...")
     rospy.init_node("task_execution_node", anonymous=True)
-    rospy.loginfo("Info[task_execution_node.main]: Instantiated the task_execution node")
 
     rospy.Subscriber("monitor/delivery_mdp_state", DeliveryMdpState, delivery_mdp_state_callback, queue_size=1)
     rospy.Subscriber("monitor/escort_mdp_state", EscortMdpState, escort_mdp_state_callback, queue_size=1)

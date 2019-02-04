@@ -20,11 +20,10 @@ def has_package():
 
 
 def main():
+    rospy.loginfo("Info[delivery_mdp_state_monitor.main]: Instantiating the delivery_mdp_state_monitor node...")
     rospy.init_node("delivery_mdp_state_monitor", anonymous=True)
-    rospy.loginfo("Info[delivery_mdp_state_monitor.main]: Instantiated the delivery_mdp_state_monitor node")
 
     publisher = rospy.Publisher("monitor/delivery_mdp_state", DeliveryMdpState, queue_size=10)
-
     rate = rospy.Rate(rospy.get_param("/delivery_mdp_state_monitor/rate"))
 
     while not rospy.is_shutdown():

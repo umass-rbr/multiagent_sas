@@ -15,11 +15,10 @@ def get_robot_status():
 
 
 def main():
+    rospy.loginfo("Info[world_state_monitor.main]: Instantiating the world_state_monitor node...")
     rospy.init_node("world_state_monitor", anonymous=True)
-    rospy.loginfo("Info[world_state_monitor.main]: Instantiated the world_state_monitor node")
 
     publisher = rospy.Publisher("monitor/world_state", WorldState)
-
     rate = rospy.Rate(rospy.get_param("/world_state_monitor/rate"))
 
     while not rospy.is_shutdown():

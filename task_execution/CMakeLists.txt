@@ -11,7 +11,8 @@ add_message_files(
   FILES
   DeliveryMdpState.msg
   EscortMdpState.msg
-  TaskExecutionAction.msg
+  InterfaceAction.msg
+  NavigationAction.msg
 )
 
 generate_messages(
