@@ -2,7 +2,7 @@ import json
 
 
 # loads a given map in json format
-def load_map_json(fileName):
+def load_json_map(fileName):
 
     with open(fileName) as f:
         data = json.load(f)
@@ -136,4 +136,7 @@ def generate_map(map_number):
 
 
 if __name__ == "__main__":
-    load_map_json("map.json")
+
+    campus_map = load_map_json("map.json")
+
+    print(campus_map)
