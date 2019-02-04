@@ -30,7 +30,7 @@
         "shlomoOffice": {
             "amrl": { 
                 "cost": 69
-                "obstruaction": "none"
+                "obstruction": "none"
             },
             "mailroom": { 
                 "cost": 42,
@@ -40,7 +40,7 @@
         "amrl": {
             "shlomoOffice": { 
                 "cost": 69
-                "obstruaction": "none"
+                "obstruction": "none"
             },
             "mailroom": { 
                 "cost": 42,
