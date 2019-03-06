@@ -12,7 +12,12 @@ add_message_files(
   DeliveryMdpState.msg
   EscortMdpState.msg
   InterfaceAction.msg
-  NavigationAction.msg
+  NavGoal.msg
+)
+
+add_service_files(
+  FILES
+  GetLocationSrv.srv
 )
 
 generate_messages(

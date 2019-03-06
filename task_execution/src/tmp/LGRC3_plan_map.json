@@ -1,24 +1,21 @@
 {
-    "name": "lgrc",
+    "name": "LGRC_3rd",
     "locations": {
         "AMRL": {
-            "name": "AMRL", 
             "pose": {
-                "x": 26.4, 
+                "x": 26.4,
                 "y": 49.17,
                 "theta": 0.0
             }
         },
         "LPR": {
-            "name": "LPR",
-            "pos":{
+            "pose": {
                 "x": 25.8,
                 "y": 33.1,
                 "theta": 0.0
             }
         },
         "RBR": {
-            "Name": "RBR",
             "pose": {
                 "x": 26.6,
                 "y": 64.4,
@@ -26,7 +23,6 @@
             }
         },
         "Lobby": {
-            "name": "Third Floor Lobby",
             "pose": {
                 "x": 22.6,
                 "y": 19.87,
@@ -34,15 +30,13 @@
             }
         },
         "OfficeShlomo": {
-            "name": "Shlomo's Office",
             "pose": {
-                "x": 26.4, 
-                "y": 49.17,
+                "x": 19.7,
+                "y": 78.26,
                 "theta": 0.0
             }
         },
         "OfficeJoydeep": {
-            "name": "Joydeep's Office",
             "pose": {
                 "x": 17.8,
                 "y": 5.4,
@@ -51,34 +45,33 @@
         }
     },
     "paths": {
-        "OfficeShlomo": {
-            "AMRL": { 
-                "cost": 69,
-                "obstruction": "none"
-            },
-            "mailroom": { 
-                "cost": 42,
-                "obstruction": "door"
-            }
-        },
         "AMRL": {
-            "LPR"
-            "OfficeShlomo": { 
-                "cost": 69,
+            "LPR": {
+                "cost": 15,
                 "obstruction": "none"
-            },
-            "mailroom": { 
-                "cost": 42,
+            }
+        },
+        "LPR": {
+            "Lobby": {
+                "cost": 15,
+                "obstruction": "none"
+            }
+        },
+        "Lobby": {
+            "OfficeShlomo": {
+                "cost": 45,
                 "obstruction": "door"
             }
         },
-        "mailroom": {
-            "OfficeShlomo": { 
-                "cost": 69,
+        "RBR": {
+            "OfficeShlomo": {
+                "cost": 15,
                 "obstruction": "door"
-            },
-            "AMRL": { 
-                "cost": 69,
+            }
+        },
+        "OfficeShlomo": {
+            "OfficeJoydeep": {
+                "cost": 50,
                 "obstruction": "door"
             }
         }

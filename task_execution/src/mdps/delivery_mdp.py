@@ -8,7 +8,7 @@ import numpy as np
 import simulator
 
 current_file_path = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(current_file_path, "..", "..", "..", "..", "..", "nova", "python"))
+sys.path.append(os.path.join(current_file_path, "..","..", "..", "..", "..", "..", "nova", "python"))
 
 from nova.mdp import MDP
 from nova.mdp_value_function import MDPValueFunction
@@ -97,11 +97,20 @@ class DeliveryMDP(object):
         for s, state in enumerate(self.states):
             for a, action in enumerate(self.actions):
 
+                if state[0] == self.dropoff_location and state[1]:
+                    R[s][a] += 100000
+                    continue
+
                 if action != "pickup":
                     if action in self.world_map["paths"][state[0]]:
                         R[s][a] -= self.world_map["paths"][state[0]][action]['cost']
                     else:
-                        R[s][a] = float("-inf")
+                        R[s][a] -= 100000
+                else:
+                    if state[0] == self.pickup_location and state[1] is False:
+                        R[s][a] += 100
+                    else:
+                        R[s][a] -= 100
 
         return R
 
@@ -151,10 +160,10 @@ class DeliveryMDP(object):
 
 
 def main():
-    with open('../tmp/lgrc.json') as world_map_file:
+    with open('../tmp/LGRC3_plan_map.json') as world_map_file:
         world_map = json.load(world_map_file)
 
-        delivery_mdp = DeliveryMDP(world_map, 'shlomoOffice', 'AMRL')
+        delivery_mdp = DeliveryMDP(world_map, 'shlomoOffice', 'amrl')
         initial_state = ('mailroom', False)
         
         simulator.simulate(delivery_mdp, initial_state)

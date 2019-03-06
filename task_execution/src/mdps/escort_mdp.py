@@ -8,7 +8,7 @@ import numpy as np
 import simulator
 
 current_file_path = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(current_file_path, "..", "..", "..", "..", "..", "nova", "python"))
+sys.path.append(os.path.join(current_file_path, "..", "..", "..", "..", "nova", "python"))
 
 from nova.mdp import MDP
 from nova.mdp_value_function import MDPValueFunction
@@ -151,7 +151,7 @@ class EscortMDP(object):
 
 
 def main():
-    with open('../tmp/lgrc.json') as world_map_file:
+    with open('../tmp/LGRC_plan_map.json') as world_map_file:
         world_map = json.load(world_map_file)
 
         escort_mdp = EscortMDP(world_map, 'shlomoOffice', 'AMRL')

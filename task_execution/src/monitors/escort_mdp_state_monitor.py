@@ -7,11 +7,20 @@ import rospy
 from task_execution.msg import EscortMdpState
 
 
-# TODO Implement this function 
+# TODO Test this function 
 def get_location():
-    with open('/home/justin/Documents/Development/catkin_ws/src/task_execution/src/tmp/lgrc.json') as world_map_file:
-        world_map = json.load(world_map_file)
-        return random.choice(world_map["locations"].keys())
+    rospy.wait_for_service('mid_level_planner/map_management/get_loc')
+    try:
+        get_location = rospy.ServiceProxy('mid_level_planner/map_management/get_loc',GetLocationSrv)
+        location_response = get_location()
+        return location_response.curr_loc
+    except rospy.ServiceException, e:
+        print("Service call failed: %s"%e)
+    return rospy.ServiceProxy
+
+    # with open('/home/justin/Documents/Development/catkin_ws/src/task_execution/src/tmp/lgrc.json') as world_map_file:
+    #     world_map = json.load(world_map_file)
+    #     return random.choice(world_map["locations"].keys())
 
 
 # TODO Implement this function 
