@@ -5,9 +5,9 @@ import rospy
 
 from task_handler import DeliveryTaskHandler, EscortTaskHandler
 from task_assignment.msg import TaskAssignmentAction
-from task_execution.msg import DeliveryMdpState, EscortMdpState, InterfaceAction, NavigationAction
+from task_execution.msg import DeliveryMdpState, EscortMdpState, InterfaceAction, NavGoal
 
-NAVIGATION_ACTION_PUBLISHER = rospy.Publisher("task_execution/navigation_action", NavigationAction, queue_size=1)
+NAVIGATION_ACTION_PUBLISHER = rospy.Publisher("set_goal_pose", NavGoal, queue_size=1)
 INTERFACE_ACTION_PUBLISHER = rospy.Publisher("task_execution/interface_action", InterfaceAction, queue_size=1)
 
 TASK_MAP = {
@@ -36,7 +36,8 @@ def escort_mdp_state_callback(message):
 
 
 def get_world_map():
-    with open('/home/justin/Documents/Development/catkin_ws/src/task_execution/src/tmp/lgrc.json') as world_map_file:
+    # with open('/home/justin/Documents/Development/catkin_ws/src/task_execution/src/tmp/LGRC3_plan_map.json') as world_map_file:
+    with open('../tmp/LGRC3_plan_map.json') as world_map_file: 
         return json.load(world_map_file)
 
 

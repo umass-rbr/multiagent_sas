@@ -27,7 +27,7 @@ ROBOTS = [PUMPKIN, JAKE, SHLOMO]
 
 
 def get_world_map():
-    with open('../tmp/lgrc.json') as world_map_file:
+    with open('../tmp/LRGC3_plan_map.json') as world_map_file:
         return json.load(world_map_file)
     # with open('/home/justin/Documents/Development/catkin_ws/src/task_assignment/src/tmp/lgrc.json') as world_map_file:
     #     return json.load(world_map_file)

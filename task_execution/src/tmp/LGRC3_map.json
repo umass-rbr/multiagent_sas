@@ -1,0 +1,68 @@
+{
+  "name":"LGRC_3rd",
+  "vertices":
+  [
+    {
+      "name":"AMRL",
+      "pose":{"x":26.4, "y":49.17, "theta":0.0}
+     },
+     {
+      "name":"LPR",
+      "pose":{"x":25.8, "y":33.1, "theta":0.0}
+     },
+     {
+      "name":"RBR",
+      "pose":{"x":26.6, "y":64.4, "theta":0.0}
+     },
+     {
+      "name":"Lobby",
+      "pose":{"x":22.6, "y":19.87, "theta":0.0}
+     },
+     {
+      "name":"OfficeShlomo",
+      "pose":{"x":19.7, "y":78.26, "theta":0.0}
+     },
+     {
+      "name":"OfficeJoydeep",
+      "pose":{"x":17.8, "y":5.4, "theta":0.0}
+     }
+  ],
+  "edges":
+  [
+    {
+      "from":"AMRL",
+      "to":"LPR",
+      "weight": 15
+    },
+    {
+      "from":"AMRL",
+      "to":"RBR",
+      "weight": 15
+    },
+    {
+      "from":"LPR",
+      "to":"Lobby",
+      "weight": 15
+    },
+    {
+      "from":"Lobby",
+      "to":"OfficeShlomo",
+      "weight": 45
+    },
+    {
+      "from":"Lobby",
+      "to":"OfficeJoydeep",
+      "weight": 15
+    },    
+    {
+      "from":"RBR",
+      "to":"OfficeShlomo",
+      "weight": 15
+    },
+    {
+      "from":"OfficeShlomo",
+      "to":"OfficeJoydeep",
+      "weight": 50
+    }
+  ]
+}

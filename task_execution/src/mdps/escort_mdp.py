@@ -151,7 +151,7 @@ class EscortMDP(object):
 
 
 def main():
-    with open('../tmp/lgrc.json') as world_map_file:
+    with open('../tmp/LGRC_plan_map.json') as world_map_file:
         world_map = json.load(world_map_file)
 
         escort_mdp = EscortMDP(world_map, 'shlomoOffice', 'AMRL')

@@ -160,7 +160,7 @@ class DeliveryMDP(object):
 
 
 def main():
-    with open('../tmp/lgrc.json') as world_map_file:
+    with open('../tmp/LGRC3_plan_map.json') as world_map_file:
         world_map = json.load(world_map_file)
 
         delivery_mdp = DeliveryMDP(world_map, 'shlomoOffice', 'amrl')
