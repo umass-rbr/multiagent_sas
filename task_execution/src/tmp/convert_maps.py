@@ -8,6 +8,7 @@ def convert_amrl_map_to_rbr_map():
 
         for dict_ in map_['vertices']:
             new_map_['locations'][dict_['name']] = {}
+            new_map_['locations'][dict_['name']]['name'] = dict_['name']
             new_map_['locations'][dict_['name']]['pose'] = dict_['pose']
 
         for dict_ in map_['edges']:
@@ -26,4 +27,4 @@ def convert_amrl_map_to_rbr_map():
     ofile.close()
 
 if __name__ == '__main__':
-    main()
+    convert_amrl_map_to_rbr_map()

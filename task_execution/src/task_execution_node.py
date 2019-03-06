@@ -37,7 +37,7 @@ def escort_mdp_state_callback(message):
 
 def get_world_map():
     # with open('/home/justin/Documents/Development/catkin_ws/src/task_execution/src/tmp/LGRC3_plan_map.json') as world_map_file:
-    with open('../tmp/LGRC3_plan_map.json') as world_map_file: 
+    with open('/home/justin/Documents/Development/catkin_ws/src/task_execution/src/tmp/LGRC3_plan_map.json') as world_map_file: 
         return json.load(world_map_file)
 
 
@@ -86,7 +86,7 @@ def execute(task_assignment):
                     action_message.command = "Please place the package on me."
                     INTERFACE_ACTION_PUBLISHER.publish(action_message)
                 else:
-                    action_message = NavigationAction()
+                    action_message = NavGoal()
                     action_message.header.stamp = rospy.Time.now()
                     action_message.header.frame_id = "/task_execution_node"
                     action_message.x = world_map["locations"][current_action]["pose"]["x"]

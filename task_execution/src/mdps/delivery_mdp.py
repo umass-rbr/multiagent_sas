@@ -8,7 +8,7 @@ import numpy as np
 import simulator
 
 current_file_path = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(current_file_path, "..","..", "..", "..", "..", "..", "nova", "python"))
+sys.path.append(os.path.join(current_file_path, "..","..", "..", "..", "..", "nova", "python"))
 
 from nova.mdp import MDP
 from nova.mdp_value_function import MDPValueFunction

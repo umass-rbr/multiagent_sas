@@ -1,78 +1,90 @@
 {
-    "name": "LGRC_3rd",
+    "name": "LGRC_3rd", 
     "locations": {
         "AMRL": {
             "pose": {
-                "x": 26.4,
-                "y": 49.17,
+                "y": 49.17, 
+                "x": 26.4, 
                 "theta": 0.0
-            }
-        },
+            }, 
+            "name": "AMRL"
+        }, 
         "LPR": {
             "pose": {
-                "x": 25.8,
-                "y": 33.1,
+                "y": 33.1, 
+                "x": 25.8, 
                 "theta": 0.0
-            }
-        },
+            }, 
+            "name": "LPR"
+        }, 
         "RBR": {
             "pose": {
-                "x": 26.6,
-                "y": 64.4,
+                "y": 64.4, 
+                "x": 26.6, 
                 "theta": 0.0
-            }
-        },
-        "Lobby": {
-            "pose": {
-                "x": 22.6,
-                "y": 19.87,
-                "theta": 0.0
-            }
-        },
-        "OfficeShlomo": {
-            "pose": {
-                "x": 19.7,
-                "y": 78.26,
-                "theta": 0.0
-            }
-        },
+            }, 
+            "name": "RBR"
+        }, 
         "OfficeJoydeep": {
             "pose": {
-                "x": 17.8,
-                "y": 5.4,
+                "y": 5.4, 
+                "x": 17.8, 
                 "theta": 0.0
-            }
+            }, 
+            "name": "OfficeJoydeep"
+        }, 
+        "OfficeShlomo": {
+            "pose": {
+                "y": 78.26, 
+                "x": 19.7, 
+                "theta": 0.0
+            }, 
+            "name": "OfficeShlomo"
+        }, 
+        "Lobby": {
+            "pose": {
+                "y": 19.87, 
+                "x": 22.6, 
+                "theta": 0.0
+            }, 
+            "name": "Lobby"
         }
     },
     "paths": {
         "AMRL": {
             "LPR": {
-                "cost": 15,
-                "obstruction": "none"
+                "obstruction": "none", 
+                "cost": 15
             }
-        },
-        "LPR": {
-            "Lobby": {
-                "cost": 15,
-                "obstruction": "none"
-            }
-        },
-        "Lobby": {
-            "OfficeShlomo": {
-                "cost": 45,
-                "obstruction": "door"
-            }
-        },
-        "RBR": {
-            "OfficeShlomo": {
-                "cost": 15,
-                "obstruction": "door"
-            }
-        },
+        }, 
         "OfficeShlomo": {
             "OfficeJoydeep": {
-                "cost": 50,
-                "obstruction": "door"
+                "obstruction": "door", 
+                "cost": 50
+            }
+        }, 
+        "RBR": {
+            "OfficeShlomo": {
+                "obstruction": "none", 
+                "cost": 15
+            }
+        }, 
+        "LPR": {
+            "Lobby": {
+                "obstruction": "none", 
+                "cost": 15
+            }
+        }, 
+        "Lobby": {
+            "OfficeShlomo": {
+                "obstruction": "door", 
+                "cost": 45
+            }
+        },
+        "OfficeJoydeep": {
+            "OfficeShlomo": {
+                "obstruction": "door",
+                "cost": 50
             }
         }
     }

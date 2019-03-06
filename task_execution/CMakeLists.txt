@@ -7,6 +7,12 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
 )
 
+include_directories(
+    ${catkin_INCLUDE_DIRS}
+)
+
+catkin_python_setup()
+
 add_message_files(
   FILES
   DeliveryMdpState.msg

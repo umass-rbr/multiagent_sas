@@ -5,22 +5,22 @@ import random
 import rospy
 
 from task_execution.msg import DeliveryMdpState
-from mid_level_robot_planner import *
+from mid_level_robot_planner.srv import GetLocationSrv
+#from task_execution.srv import GetLocationSrv
 
-# TODO test this function 
+
+# TODO Test this function 
 def get_location():
-    rospy.wait_for_service('mid_level_planner/map_management/get_loc')
+    rospy.wait_for_service('/mid_level_planner/map_management/get_loc')
+
     try:
-        get_location = rospy.ServiceProxy('mid_level_planner/map_management/get_loc',GetLocationSrv)
+        get_location = rospy.ServiceProxy('mid_level_robot_planner/get_loc', GetLocationSrv)
         location_response = get_location()
         return location_response.curr_loc
-    except rospy.ServiceException, e:
-        print("Service call failed: %s"%e)
-    return rospy.ServiceProxy
-
-    # with open('/home/justin/Documents/Development/catkin_ws/src/task_execution/src/tmp/lgrc.json') as world_map_file:
-    #     world_map = json.load(world_map_file)
-    #     return random.choice(world_map["locations"].keys())
+    except rospy.ServiceException as e:
+        rospy.loginfo("Service call failed: %s", e)
+        
+    return False
 
 
 # TODO Implement this function 
@@ -29,8 +29,9 @@ def has_package():
 
 
 def main():
-    rospy.loginfo("Info[delivery_mdp_state_monitor.main]: Instantiating the delivery_mdp_state_monitor node...")
     rospy.init_node("delivery_mdp_state_monitor", anonymous=True)
+
+    rospy.loginfo("Info[delivery_mdp_state_monitor.main]: Instantiating the delivery_mdp_state_monitor node...")
 
     publisher = rospy.Publisher("monitor/delivery_mdp_state", DeliveryMdpState, queue_size=10)
     rate = rospy.Rate(rospy.get_param("/delivery_mdp_state_monitor/rate"))

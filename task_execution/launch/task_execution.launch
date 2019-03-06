@@ -6,11 +6,11 @@
     <param name="timeout_duration" value="10" />
   </node>
 
-  <node pkg="task_execution" type="delivery_mdp_state_monitor.py" name="delivery_mdp_state_monitor">
+  <node pkg="task_execution" type="delivery_mdp_state_monitor.py" name="delivery_mdp_state_monitor" output="screen">
     <param name="rate" value="10" />
   </node>
   
-  <node pkg="task_execution" type="escort_mdp_state_monitor.py" name="escort_mdp_state_monitor">
+  <node pkg="task_execution" type="escort_mdp_state_monitor.py" name="escort_mdp_state_monitor" output="screen">
     <param name="rate" value="10" />
   </node>
 </launch>
