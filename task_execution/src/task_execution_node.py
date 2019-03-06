@@ -49,7 +49,7 @@ def execute(task_assignment):
     timeout_duration = rospy.get_param('/task_execution_node/timeout_duration')
 
     if task_assignment.robot_id == robot_id:
-        task_handler = TASK_MAP[task_assignment.task_request. type]["task_handler"]
+        task_handler = TASK_MAP[task_assignment.task_request.type]["task_handler"]
         message_selector = TASK_MAP[task_assignment.task_request.type]["message_selector"]
         task_data = json.loads(task_assignment.task_request.data)
 
