@@ -68,8 +68,8 @@ def execute(task_assignment):
         current_state = None
 
         while not task_handler.is_goal(current_state, task_data):
-            rospy.loginfo("Info[task_execution_node.execute]: Retrieving the current state...")
             new_state = task_handler.get_state(message_selector())
+            rospy.loginfo("Info[task_execution_node.execute]: Retrieved the current state: %s", new_state)
 
             if new_state != current_state:
                 current_state = new_state
@@ -97,12 +97,13 @@ def execute(task_assignment):
                 
                 activation_time = rospy.Time.now()
 
-
             current_time = rospy.Time.now()
             if current_time - activation_time > rospy.Duration(timeout_duration):
                 raise RuntimeError("Exceeded the time limit to execute the task")
 
             rospy.sleep(wait_duration)
+        
+        rospy.loginfo("Info[task_execution_node.execute]: Reach the goal :)")
 
 
 def main():

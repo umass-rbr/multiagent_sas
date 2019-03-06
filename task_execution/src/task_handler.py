@@ -18,7 +18,7 @@ class DeliveryTaskHandler(object):
     def is_goal(self, state, task_data):
         if not state:
             return False
-        return state[0] is task_data["dropoff_location"] and state[1]
+        return state[0] == task_data["dropoff_location"] and state[1]
 
 
 class EscortTaskHandler(object):
@@ -37,4 +37,4 @@ class EscortTaskHandler(object):
     def is_goal(self, state, task_data):
         if not state:
             return False
-        return state[0] is task_data["dropoff_location"] and state[1]
+        return state[0] == task_data["dropoff_location"] and state[1]
