@@ -4,8 +4,11 @@ import random
 
 import rospy
 
+import roslib; roslib.load_manifest('mid_level_robot_planner')
+from mid_level_robot_planner.srv import *
+
 from task_execution.msg import DeliveryMdpState
-from mid_level_robot_planner.srv import GetLocationSrv
+#from mid_level_robot_planner.srv import GetLocationSrv
 #from task_execution.srv import GetLocationSrv
 
 
@@ -14,7 +17,7 @@ def get_location():
     rospy.wait_for_service('/mid_level_planner/map_management/get_loc')
 
     try:
-        get_location = rospy.ServiceProxy('mid_level_robot_planner/get_loc', GetLocationSrv)
+        get_location = rospy.ServiceProxy('/mid_level_planner/map_management/get_loc', GetLocationSrv)
         location_response = get_location()
         return location_response.curr_loc
     except rospy.ServiceException as e:
@@ -25,7 +28,7 @@ def get_location():
 
 # TODO Implement this function 
 def has_package():
-    return True
+    return False
 
 
 def main():
@@ -43,7 +46,7 @@ def main():
         message.location = get_location()
         message.has_package = has_package()
 
-        rospy.loginfo(message)
+        # rospy.loginfo(message)
         publisher.publish(message)
 
         rate.sleep()

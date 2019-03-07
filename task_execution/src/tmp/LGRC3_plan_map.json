@@ -82,6 +82,10 @@
             }
         },
         "OfficeJoydeep": {
+            "Lobby": {
+                "obstruction": "none",
+                "cost": 15
+            },
             "OfficeShlomo": {
                 "obstruction": "door",
                 "cost": 50
