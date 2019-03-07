@@ -8,7 +8,7 @@ import numpy as np
 import simulator
 
 current_file_path = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(current_file_path, "..","..","..", "..", "..", "..", "nova", "python"))
+sys.path.append(os.path.join(current_file_path, "..","..", "..", "..", "..", "nova", "python"))
 
 from nova.mdp import MDP
 from nova.mdp_value_function import MDPValueFunction
@@ -108,7 +108,7 @@ class DeliveryMDP(object):
                         R[s][a] -= 100
 
                 elif action == 'dropoff':
-                    if statep[0] == self.dropoff_location and state[1] is True:
+                    if state[0] == self.dropoff_location and state[1] is True:
                         R[s][a] += 1000
                     else:
                         R[s][a] -= 1000

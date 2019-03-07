@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 import json
-
+import os
 import rospy
+
+current_file_path = os.path.dirname(os.path.realpath(__file__))
 
 from task_handler import DeliveryTaskHandler, EscortTaskHandler
 from task_assignment.msg import TaskAssignmentAction
@@ -37,7 +39,8 @@ def escort_mdp_state_callback(message):
 
 def get_world_map():
     # with open('/home/justin/Documents/Development/catkin_ws/src/task_execution/src/tmp/LGRC3_plan_map.json') as world_map_file:
-    with open('/home/justin/Documents/Development/catkin_ws/src/task_execution/src/tmp/LGRC3_plan_map.json') as world_map_file: 
+    #with open('/home/justin/Documents/Development/catkin_ws/src/task_execution/src/tmp/LGRC3_plan_map.json') as world_map_file: 
+    with open(current_file_path+'/tmp/LGRC3_plan_map.json') as world_map_file:
         return json.load(world_map_file)
 
 
@@ -66,10 +69,17 @@ def execute(task_assignment):
         action_map = solution["action_map"]
         policy = solution["policy"]
 
+        has_package_ = False
+
+        # rospy.loginfo(state_map)
+        # rospy.loginfo(action_map)
+        # rospy.loginfo(policy)
+
         current_state = None
 
         while not task_handler.is_goal(current_state, task_data):
             new_state = task_handler.get_state(message_selector())
+            new_state = (new_state[0], has_package_)
             rospy.loginfo("Info[task_execution_node.execute]: Retrieved the current state: %s", new_state)
 
             if new_state != current_state:
@@ -80,18 +90,26 @@ def execute(task_assignment):
                 current_action = action_map[action_index]
 
                 if current_action == "pickup":
-                    action_message = InterfaceAction()
-                    action_message.header.stamp = rospy.Time.now()
-                    action_message.header.frame_id = "/task_execution_node"
-                    action_message.command = "Please place the package on me."
-                    INTERFACE_ACTION_PUBLISHER.publish(action_message)
+                    rospy.loginfo("Please place the package on me.")
+                    response = raw_input("Please hit 'enter' after you have placed the package on me.")
+                    has_package_ = True
+                    # action_message = InterfaceAction()
+                    # action_message.header.stamp = rospy.Time.now()
+                    # action_message.header.frame_id = "/task_execution_node"
+                    # action_message.command = "Please place the package on me."
+                    # INTERFACE_ACTION_PUBLISHER.publish(action_message)
+                elif current_action == "dropoff":
+                    rospy.loginfo("Please take the package from me.")
+                    response = raw_input("Please hit 'enter' after you taken the package from me.")
+                    break
                 else:
                     action_message = NavGoal()
-                    action_message.header.stamp = rospy.Time.now()
-                    action_message.header.frame_id = "/task_execution_node"
+                    #action_message.header.stamp = rospy.Time.now()
+                    #action_message.header.frame_id = "/task_execution_node"
                     action_message.x = world_map["locations"][current_action]["pose"]["x"]
                     action_message.y = world_map["locations"][current_action]["pose"]["y"]
-                    action_message.theta = world_map["locations"][current_action]["pose"]["theta"]
+                    rospy.loginfo("Current action: go-to " + str(current_action))
+                    #action_message.theta = world_map["locations"][current_action]["pose"]["theta"]
                     NAVIGATION_ACTION_PUBLISHER.publish(action_message)
                 
                 rospy.loginfo("Info[task_execution_node.execute]: Published the action: %s", action_message)
@@ -99,12 +117,12 @@ def execute(task_assignment):
                 activation_time = rospy.Time.now()
 
             current_time = rospy.Time.now()
-            if current_time - activation_time > rospy.Duration(timeout_duration):
-                raise RuntimeError("Exceeded the time limit to execute the task")
+            # if current_time - activation_time > rospy.Duration(timeout_duration):
+            #     raise RuntimeError("Exceeded the time limit to execute the task")
 
             rospy.sleep(wait_duration)
         
-        rospy.loginfo("Info[task_execution_node.execute]: Reach the goal :)")
+        rospy.loginfo("Info[task_execution_node.execute]: Reached the goal :)")
 
 
 def main():
