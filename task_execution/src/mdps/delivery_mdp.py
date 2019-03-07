@@ -8,7 +8,7 @@ import numpy as np
 import simulator
 
 current_file_path = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(current_file_path, "..","..", "..", "..", "..", "nova", "python"))
+sys.path.append(os.path.join(current_file_path, "..","..","..", "..", "..", "..", "nova", "python"))
 
 from nova.mdp import MDP
 from nova.mdp_value_function import MDPValueFunction
@@ -62,7 +62,7 @@ class DeliveryMDP(object):
         return [(location, has_package) for location in location_states for has_package in has_package_states]
 
     def _compute_actions(self):
-        return self.world_map["locations"].keys() + ["pickup"]
+        return self.world_map["locations"].keys() + ["pickup"] + ["dropoff"]
 
     def _compute_state_transitions(self):
         S = [[[-1 for sp in range(self.mdp.ns)] for a in range(self.mdp.m)] for s in range(self.mdp.n)]
@@ -70,9 +70,14 @@ class DeliveryMDP(object):
 
         for s, state in enumerate(self.states):
             for a, action in enumerate(self.actions):
-                if state[0] == self.dropoff_location and state[1]:
-                    T[s][a][s] = 1.0
-                    continue
+
+                if action == "dropoff":
+                    if state[0] == self.dropoff_location and state[0] == statePrime[0] and state[1] and not statePrime[1]:
+                        T[s][a][sp] = 1.0
+                        continue
+                # if state[0] == self.dropoff_location and state[1]:
+                #     T[s][a][s] = 1.0
+                #     continue
 
                 for sp, statePrime in enumerate(self.states):
                     S[s][a][sp] = sp
@@ -96,21 +101,23 @@ class DeliveryMDP(object):
 
         for s, state in enumerate(self.states):
             for a, action in enumerate(self.actions):
-
-                if state[0] == self.dropoff_location and state[1]:
-                    R[s][a] += 100000
-                    continue
-
-                if action != "pickup":
-                    if action in self.world_map["paths"][state[0]]:
-                        R[s][a] -= self.world_map["paths"][state[0]][action]['cost']
-                    else:
-                        R[s][a] -= 100000
-                else:
+                if action == 'pickup':
                     if state[0] == self.pickup_location and state[1] is False:
                         R[s][a] += 100
                     else:
                         R[s][a] -= 100
+
+                elif action == 'dropoff':
+                    if statep[0] == self.dropoff_location and state[1] is True:
+                        R[s][a] += 1000
+                    else:
+                        R[s][a] -= 1000
+
+                else:
+                    if action in self.world_map["paths"][state[0]]:
+                        R[s][a] -= self.world_map["paths"][state[0]][action]['cost']
+                    else:
+                        R[s][a] -= 100000
 
         return R
 
