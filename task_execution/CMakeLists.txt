@@ -19,11 +19,6 @@ add_message_files(
   NavGoal.msg
 )
 
-add_service_files(
-  FILES
-  GetLocationSrv.srv
-)
-
 generate_messages(
    DEPENDENCIES
    std_msgs
