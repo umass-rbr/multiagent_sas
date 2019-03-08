@@ -4,10 +4,10 @@ import random
 
 import rospy
 
-from mid_level_robot_planner.srv import GetLocationSrv
-from task_execution.msg import DeliveryMdpState
-
 import roslib; roslib.load_manifest('mid_level_robot_planner')
+
+from mid_level_robot_planner.srv import *
+from task_execution.msg import DeliveryMdpState
 
 
 def get_location():
