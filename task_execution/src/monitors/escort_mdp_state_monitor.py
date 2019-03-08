@@ -5,11 +5,9 @@ import random
 import rospy
 
 import roslib; roslib.load_manifest('mid_level_robot_planner')
-from mid_level_robot_planner.srv import *
+from mid_level_robot_planner.srv import GetLocationSrv
 
 from task_execution.msg import EscortMdpState
-# from mid_level_robot_planner.srv import *
-#from task_execution.srv import GetLocationSrv
 
 
 # TODO Test this function 
@@ -46,7 +44,7 @@ def main():
         message.location = get_location()
         message.with_person = with_person()
 
-        # rospy.loginfo(message)
+        rospy.loginfo(message)
         publisher.publish(message)
 
         rate.sleep()

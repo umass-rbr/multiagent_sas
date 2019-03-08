@@ -55,16 +55,33 @@
             "LPR": {
                 "obstruction": "none", 
                 "cost": 15
+            },
+            "RBR": {
+                "obstruction": "none", 
+                "cost": 15
             }
         }, 
         "OfficeShlomo": {
             "OfficeJoydeep": {
                 "obstruction": "door", 
                 "cost": 50
+            },
+            "Lobby": {
+                "obstruction": "door", 
+                "cost": 45
+            },
+            "RBR": {
+                "obstruction": "none", 
+                "cost": 15
             }
+
         }, 
         "RBR": {
             "OfficeShlomo": {
+                "obstruction": "none", 
+                "cost": 15
+            },
+            "AMRL": {
                 "obstruction": "none", 
                 "cost": 15
             }
@@ -73,13 +90,26 @@
             "Lobby": {
                 "obstruction": "none", 
                 "cost": 15
+            },
+            "AMRL": {
+                "obstruction": "none", 
+                "cost": 15
             }
         }, 
         "Lobby": {
             "OfficeShlomo": {
                 "obstruction": "door", 
                 "cost": 45
+            },
+            "OfficeJoydeep": {
+                "obstruction": "none", 
+                "cost": 15
+            },
+            "LPR": {
+                "obstruction": "none", 
+                "cost": 15
             }
+
         },
         "OfficeJoydeep": {
             "Lobby": {

@@ -5,11 +5,15 @@ import rospy
 
 current_file_path = os.path.dirname(os.path.realpath(__file__))
 
+import roslib; roslib.load_manifest('jackal_msgs_amrl')
+from jackal_msgs_amrl.msg import NavGoal
+
+
 from task_handler import DeliveryTaskHandler, EscortTaskHandler
 from task_assignment.msg import TaskAssignmentAction
-from task_execution.msg import DeliveryMdpState, EscortMdpState, InterfaceAction, NavGoal
+from task_execution.msg import DeliveryMdpState, EscortMdpState, InterfaceAction
 
-NAVIGATION_ACTION_PUBLISHER = rospy.Publisher("set_goal_pose", NavGoal, queue_size=1)
+NAVIGATION_ACTION_PUBLISHER = rospy.Publisher("orb_nav/goal", NavGoal, queue_size=1)
 INTERFACE_ACTION_PUBLISHER = rospy.Publisher("task_execution/interface_action", InterfaceAction, queue_size=1)
 
 TASK_MAP = {
@@ -38,9 +42,7 @@ def escort_mdp_state_callback(message):
 
 
 def get_world_map():
-    # with open('/home/justin/Documents/Development/catkin_ws/src/task_execution/src/tmp/LGRC3_plan_map.json') as world_map_file:
-    #with open('/home/justin/Documents/Development/catkin_ws/src/task_execution/src/tmp/LGRC3_plan_map.json') as world_map_file: 
-    with open(current_file_path+'/tmp/LGRC3_plan_map.json') as world_map_file:
+    with open(current_file_path + '/tmp/LGRC3_plan_map.json') as world_map_file:
         return json.load(world_map_file)
 
 
@@ -70,11 +72,6 @@ def execute(task_assignment):
         policy = solution["policy"]
 
         has_package_ = False
-
-        # rospy.loginfo(state_map)
-        # rospy.loginfo(action_map)
-        # rospy.loginfo(policy)
-
         current_state = None
 
         while not task_handler.is_goal(current_state, task_data):
@@ -112,7 +109,7 @@ def execute(task_assignment):
                     #action_message.theta = world_map["locations"][current_action]["pose"]["theta"]
                     NAVIGATION_ACTION_PUBLISHER.publish(action_message)
                 
-                rospy.loginfo("Info[task_execution_node.execute]: Published the action: %s", action_message)
+                #rospy.loginfo("Info[task_execution_node.execute]: Published the action: %s", action_message)
                 
                 activation_time = rospy.Time.now()
 
