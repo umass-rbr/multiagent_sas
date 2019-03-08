@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import json
 import random
-
+import os
 import rospy
 
 import roslib; roslib.load_manifest('mid_level_robot_planner')
@@ -38,7 +38,7 @@ def main():
     rate = rospy.Rate(rospy.get_param("/delivery_mdp_state_monitor/rate"))
 
     current_location = None
-    world_map = json.load( open(current_file_path + '../tmp/LGRC3_plan_map.json') )
+    world_map = json.load( open(current_file_path + '/../tmp/LGRC3_plan_map.json') )
 
     while not rospy.is_shutdown():
         message = DeliveryMdpState()
@@ -46,13 +46,13 @@ def main():
         message.header.frame_id = "/delivery_mdp_state_monitor"
 
         location, distance = get_nearest_location()
-        if current_location is None or (distance < 3.0 and location in world_map['paths'][current_location]): #3.0 is a placeholder that should be changed.
+        if current_location is None or (distance < 2.0 and location in world_map['paths'][current_location]): #3.0 is a placeholder that should be changed.
             current_location = location
 
         message.location = current_location
         message.has_package = has_package()
 
-        rospy.loginfo(message)
+        #rospy.loginfo(message)
         publisher.publish(message)
 
         rate.sleep()

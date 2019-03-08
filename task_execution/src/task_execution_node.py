@@ -72,11 +72,14 @@ def execute(task_assignment):
 
         has_package = False
         current_state = None
+        current_action = None
 
         while not task_handler.is_goal(current_state, task_data):
             new_state = task_handler.get_state(message_selector())
             new_state = (new_state[0], has_package)
             rospy.loginfo("Info[task_execution_node.execute]: Retrieved the current state: %s", new_state)
+            if current_action:
+                rospy.loginfo("Info[task_execution_node.execute]: Executing the current action: %s", current_action)
 
             if new_state != current_state:
                 current_state = new_state
@@ -100,7 +103,7 @@ def execute(task_assignment):
                     action_message.x = world_map["locations"][current_action]["pose"]["x"]
                     action_message.y = world_map["locations"][current_action]["pose"]["y"]
 
-                    rospy.loginfo("Info[task_execution_node.execute]: Executing the current action: %s", current_action)
+                    #rospy.loginfo("Info[task_execution_node.execute]: Executing the current action: %s", current_action)
                     NAVIGATION_ACTION_PUBLISHER.publish(action_message)
                 
                 activation_time = rospy.Time.now()

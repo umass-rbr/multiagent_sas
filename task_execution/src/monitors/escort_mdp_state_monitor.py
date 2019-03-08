@@ -44,13 +44,13 @@ def main():
         message.header.frame_id = "/escort_mdp_state_monitor"
 
         location, distance = get_nearest_location()
-        if current_location is None or distance < 3.0: #3.0 is a placeholder that should be changed.
+        if current_location is None or distance < 2.0: #3.0 is a placeholder that should be changed.
             current_location = location
 
         message.location = current_location
         message.with_person = with_person()
 
-        rospy.loginfo(message)
+        #rospy.loginfo(message)
         publisher.publish(message)
 
         rate.sleep()
