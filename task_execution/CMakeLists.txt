@@ -11,19 +11,12 @@ include_directories(
     ${catkin_INCLUDE_DIRS}
 )
 
-#catkin_python_setup()
-
 add_message_files(
   FILES
   DeliveryMdpState.msg
   EscortMdpState.msg
   InterfaceAction.msg
-  )
-
-#add_service_files(
-#  FILES
-#  GetLocationSrv.srv
-#)
+)
 
 generate_messages(
    DEPENDENCIES

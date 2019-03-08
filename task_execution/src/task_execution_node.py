@@ -8,7 +8,6 @@ current_file_path = os.path.dirname(os.path.realpath(__file__))
 import roslib; roslib.load_manifest('jackal_msgs_amrl')
 from jackal_msgs_amrl.msg import NavGoal
 
-
 from task_handler import DeliveryTaskHandler, EscortTaskHandler
 from task_assignment.msg import TaskAssignmentAction
 from task_execution.msg import DeliveryMdpState, EscortMdpState, InterfaceAction
@@ -71,12 +70,12 @@ def execute(task_assignment):
         action_map = solution["action_map"]
         policy = solution["policy"]
 
-        has_package_ = False
+        has_package = False
         current_state = None
 
         while not task_handler.is_goal(current_state, task_data):
             new_state = task_handler.get_state(message_selector())
-            new_state = (new_state[0], has_package_)
+            new_state = (new_state[0], has_package)
             rospy.loginfo("Info[task_execution_node.execute]: Retrieved the current state: %s", new_state)
 
             if new_state != current_state:
@@ -88,16 +87,11 @@ def execute(task_assignment):
 
                 if current_action == "pickup":
                     rospy.loginfo("Please place the package on me.")
-                    response = raw_input("Please hit 'enter' after you have placed the package on me.")
-                    has_package_ = True
-                    # action_message = InterfaceAction()
-                    # action_message.header.stamp = rospy.Time.now()
-                    # action_message.header.frame_id = "/task_execution_node"
-                    # action_message.command = "Please place the package on me."
-                    # INTERFACE_ACTION_PUBLISHER.publish(action_message)
+                    raw_input("Please hit any key after you've placed the package on me.")
+                    has_package = True
                 elif current_action == "dropoff":
                     rospy.loginfo("Please take the package from me.")
-                    response = raw_input("Please hit 'enter' after you taken the package from me.")
+                    raw_input("Please hit any key after you've taken the package from me.")
                     break
                 else:
                     action_message = NavGoal()
@@ -105,17 +99,15 @@ def execute(task_assignment):
                     #action_message.header.frame_id = "/task_execution_node"
                     action_message.x = world_map["locations"][current_action]["pose"]["x"]
                     action_message.y = world_map["locations"][current_action]["pose"]["y"]
-                    rospy.loginfo("Current action: go-to " + str(current_action))
-                    #action_message.theta = world_map["locations"][current_action]["pose"]["theta"]
+
+                    rospy.loginfo("Info[task_execution_node.execute]: Executing the current action: %s", current_action)
                     NAVIGATION_ACTION_PUBLISHER.publish(action_message)
-                
-                #rospy.loginfo("Info[task_execution_node.execute]: Published the action: %s", action_message)
                 
                 activation_time = rospy.Time.now()
 
             current_time = rospy.Time.now()
-            # if current_time - activation_time > rospy.Duration(timeout_duration):
-            #     raise RuntimeError("Exceeded the time limit to execute the task")
+            if current_time - activation_time > rospy.Duration(timeout_duration):
+                raise RuntimeError("Exceeded the time limit to execute the task")
 
             rospy.sleep(wait_duration)
         

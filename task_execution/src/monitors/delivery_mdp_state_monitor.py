@@ -4,22 +4,21 @@ import random
 
 import rospy
 
-import roslib; roslib.load_manifest('mid_level_robot_planner')
 from mid_level_robot_planner.srv import GetLocationSrv
-
 from task_execution.msg import DeliveryMdpState
 
+import roslib; roslib.load_manifest('mid_level_robot_planner')
 
-# TODO Test this function 
+
 def get_location():
     rospy.wait_for_service('/mid_level_planner/map_management/get_loc')
 
     try:
-        get_location = rospy.ServiceProxy('/mid_level_planner/map_management/get_loc', GetLocationSrv)
-        location_response = get_location()
+        get_location_proxy = rospy.ServiceProxy('/mid_level_planner/map_management/get_loc', GetLocationSrv)
+        location_response = get_location_proxy()
         return location_response.curr_loc
     except rospy.ServiceException as e:
-        rospy.loginfo("Service call failed: %s", e)
+        rospy.loginfo("Could not get location: %s", e)
         
     return False
 

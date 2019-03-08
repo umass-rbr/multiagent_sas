@@ -3,7 +3,7 @@
   <node pkg="task_execution" type="task_execution_node.py" name="task_execution_node" output="screen">
     <param name="robot_id" value="pumpkin" />
     <param name="wait_duration" value="1" />
-    <param name="timeout_duration" value="10" />
+    <param name="timeout_duration" value="1000" />
   </node>
 
   <node pkg="task_execution" type="delivery_mdp_state_monitor.py" name="delivery_mdp_state_monitor" output="screen">
