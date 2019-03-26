@@ -9,8 +9,7 @@ def callback(data):
 
 def main():
 
-    rospy.loginfo(
-        "Info[toc_execution_node.main]: Instantiating the toc_execution node...")
+    rospy.loginfo("Info[toc_execution_node.main]: Instantiating the toc_execution node...")
     rospy.init_node('toc_execution_node', anonymous=True)
 
     rospy.Subscriber('monitor/toc_mdp_state', String, callback)
