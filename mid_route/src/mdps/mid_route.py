@@ -23,21 +23,22 @@
 import os
 import sys
 import time
+import json
 
-thisFilePath = os.path.dirname(os.path.realpath(__file__))
+current_file_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(os.path.join(current_file_path, "..","..", "..", "..", "nova", "python"))
 
-sys.path.append(os.path.join(thisFilePath, "..", "..", "nova", "python"))
 from nova.mdp import MDP
 from nova.mdp_vi import MDPVI
 from nova.mdp_value_function import MDPValueFunction
 
-import campus_map
-
-# import rospy
-
 import itertools as it
 import ctypes as ct
 import numpy as np
+
+
+# import rospy
+
 
 def power_set(iterable):
     """ Return the power set of any iterable (e.g., list) with set elements. """
@@ -52,12 +53,13 @@ def power_set(iterable):
 class RouteMDP(object):
     """ The high-level route MDP that decides path for delivery. """
 
-    def __init__(self, initialNode, goalNode, mapName):
+    def __init__(self, initialNode, goalNode, campusMapName):
         """ The constructor for the RouteMDP object. """
 
         self.initialNode = initialNode
         self.goalNode = goalNode
-        self.map = campus_map.load_json_map(mapName)
+
+        self.map = self.load_json_map(campusMapName)
         self.control = ["inControl", "noControl"]
         self.tocCost = 10
 
@@ -173,7 +175,7 @@ class RouteMDP(object):
 
                     # an obstacle exists
                     elif edgeObstacle != "none":
-                        
+
                         for sp, statePrime in enumerate(self.states):
                             S[s][a][sp] = sp
 
@@ -199,7 +201,7 @@ class RouteMDP(object):
                     check += T[s][a][sp]
                 if not (abs(check - 1.0) < 0.001):
                     print("State:", state, " ***** Action:",
-                        action, " ***** Check:", check)
+                          action, " ***** Check:", check)
 
         return S, T
 
@@ -229,7 +231,7 @@ class RouteMDP(object):
                     R[s][a] -= 0.0
 
                 # cost for normal move
-                elif action[0] in validNodes and state[0] != self.goalNode and state[1] == "inControl" and action[1] == "move": 
+                elif action[0] in validNodes and state[0] != self.goalNode and state[1] == "inControl" and action[1] == "move":
                     R[s][a] -= edgeCosts[validNodes.index(action[0])]
 
                 # cost for transitioning into toc state
@@ -242,7 +244,7 @@ class RouteMDP(object):
 
                 # large penalty otherwise
                 else:
-                   R[s][a] -= 200
+                    R[s][a] -= 200
 
         return R
 
@@ -402,12 +404,72 @@ class RouteMDP(object):
 
         return (self.currentState, reward)
 
+    def get_action(self, currentState):
+        """ Calculate the action from current state in policy
+            Parameters:
+            Returns: 
+                An action from policy.
+        """
+        a = self.policy.action(self.currentState)
+        action = self.actions[a]
+        return action
+
+    def load_json_map(self, fileName):
+        """ Loads a map from json file
+            Parameters:
+                filename from a directory
+            Returns:
+                A dictionary built from json map file
+        """
+
+        with open(fileName) as f:
+            data = json.load(f)
+
+        for attribute in data:
+            if attribute == "paths":
+                mapPaths = data[attribute]
+
+        loadedMap = dict()
+
+        for location in mapPaths.keys():
+
+            locationEdges = mapPaths[location]
+
+            # edge connections include the destination, cost, and obstruction
+            edgeConnections = []
+
+            for destination in locationEdges.keys():
+
+                destinationName = destination     
+
+                for destinationAttribute in locationEdges[destination]:
+
+                    if destinationAttribute == "cost":
+                        destinationCost = locationEdges[destination][destinationAttribute]
+
+                    elif destinationAttribute == "obstruction":
+                        destinationObstruction = locationEdges[destination][destinationAttribute]
+
+                edgeConnections.append( (destinationName, destinationCost, destinationObstruction) )
+
+            loadedMap[location] = edgeConnections
+
+        return loadedMap
+
 
 if __name__ == "__main__":
-    initialNode = "shlomoOffice"
-    goalNode = "mailroom"
-    mapName = "map.json"
-    route = RouteMDP(initialNode, goalNode, mapName)
+
+    initialNode = 'shlomoOffice'
+    goalNode = 'mailroom'
+
+    campusMapName = '../tmp/map.json'
+
+    route = RouteMDP(initialNode, goalNode, campusMapName)
     route.initialize()
     route.solve()
     route.simulate()
+
+
+    currentState = ('schlomoOffice', 'noControl')
+    action = route.get_action(currentState)
+    print("Current State:", currentState, "; action:", action)
