@@ -4,7 +4,7 @@
   <version>0.0.1</version>
   <description>A decision-making framework that enables a robot to transfer control to a human.</description>
 
-  <maintainer email="jzhuo@umass.edu">Jason Zhuo</maintainer>
+  <maintainer email="zhuojason1@gmail.com">Jason Zhuo</maintainer>
 
   <license>MIT</license>
 
