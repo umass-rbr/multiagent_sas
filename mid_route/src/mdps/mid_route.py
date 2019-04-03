@@ -409,49 +409,7 @@ class RouteMDP(object):
         a = self.policy.action(self.currentState)
         action = self.actions[a]
         return action
-
-    def load_json_map(self, fileName):
-        """ Loads a map from json file
-            Parameters:
-                filename from a directory
-            Returns:
-                A dictionary built from json map file
-        """
-
-        with open(fileName) as f:
-            data = json.load(f)
-
-        for attribute in data:
-            if attribute == "paths":
-                mapPaths = data[attribute]
-
-        loadedMap = dict()
-
-        for location in mapPaths.keys():
-
-            locationEdges = mapPaths[location]
-
-            # edge connections include the destination, cost, and obstruction
-            edgeConnections = []
-
-            for destination in locationEdges.keys():
-
-                destinationName = destination     
-
-                for destinationAttribute in locationEdges[destination]:
-
-                    if destinationAttribute == "cost":
-                        destinationCost = locationEdges[destination][destinationAttribute]
-
-                    elif destinationAttribute == "obstruction":
-                        destinationObstruction = locationEdges[destination][destinationAttribute]
-
-                edgeConnections.append( (destinationName, destinationCost, destinationObstruction) )
-
-            loadedMap[location] = edgeConnections
-
-        return loadedMap
-
+        
 
 if __name__ == "__main__":
 
