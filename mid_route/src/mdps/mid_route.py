@@ -40,13 +40,13 @@ import numpy as np
 class RouteMDP(object):
     """ The high-level route MDP that decides path for delivery. """
 
-    def __init__(self, initialNode, goalNode, campusMapName):
+    def __init__(self, initialLocation, goalLocation, campusMap):
         """ The constructor for the RouteMDP object. """
 
-        self.initialNode = initialNode
-        self.goalNode = goalNode
+        self.initialNode = initialLocation
+        self.goalNode = goalLocation
 
-        self.map = self.load_json_map(campusMapName)
+        self.map = campusMap
         self.control = ["inControl", "noControl"]
         self.tocCost = 10
 
@@ -455,17 +455,52 @@ class RouteMDP(object):
 
 if __name__ == "__main__":
 
-    initialNode = 'shlomoOffice'
-    goalNode = 'mailroom'
+    # load the campus map
+    with open('../tmp/map.json') as campusMap:
+            data = json.load(campusMap)
 
-    campusMapName = '../tmp/map.json'
+    for attribute in data:
+        if attribute == "paths":
+            mapPaths = data[attribute]
 
-    route = RouteMDP(initialNode, goalNode, campusMapName)
+    loadedMap = dict()
+
+    for location in mapPaths.keys():
+
+        locationEdges = mapPaths[location]
+
+        # edge connections include the destination, cost, and obstruction
+        edgeConnections = []
+
+        for destination in locationEdges.keys():
+
+            destinationName = destination     
+
+            for destinationAttribute in locationEdges[destination]:
+
+                if destinationAttribute == "cost":
+                    destinationCost = locationEdges[destination][destinationAttribute]
+
+                elif destinationAttribute == "obstruction":
+                    destinationObstruction = locationEdges[destination][destinationAttribute]
+
+            edgeConnections.append( (destinationName, destinationCost, destinationObstruction) )
+
+        loadedMap[location] = edgeConnections
+
+    # initializing starting location and goal location
+    startLocation = 'shlomoOffice'
+    goalLocation = 'mailroom'
+
+    # initializing MDP and solving for policy
+    route = RouteMDP(startLocation, goalLocation, loadedMap)
     route.initialize()
     route.solve()
+
+    # simulating route in policy calculated from MDP
     route.simulate()
 
-
+    # retrieving action to take from policy in current state
     currentState = ('schlomoOffice', 'noControl')
     action = route.get_action(currentState)
     print("Current State:", currentState, "; action:", action)

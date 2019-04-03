@@ -2,25 +2,65 @@
 import rospy
 import os
 
-current_file_path = os.path.dirname(os.path.realpath(__file__))
+currentFilePath = os.path.dirname(os.path.realpath(__file__))
 
 from mid_route.msg import TocMdpState, TocMdpAction
 from mid_route.src.mdps import RouteMDP
 
 
-toc_mdp_state_message = None
+tocMdpStateMessage = None
 
 TOC_ACTION_PUBLISHER = rospy.Publisher("toc/action", TocMdpAction, queue_size=1)
 
 def toc_mdp_state_callback(message):
-    global toc_mdp_state_message
-    toc_mdp_state_message = message
+    global tocMdpStateMessage
+    tocMdpStateMessage = message
 
-def execute(currentState, goalState, mapName):
+def load_json_map():
+    """ Loads a map from json file to a dictionary for input into MDP """
+
+    with open(currentFilePath + '/tmp/map.json') as mapFile:
+    	data = json.load(mapFile)
+
+    for attribute in data:
+        if attribute == "paths":
+            mapPaths = data[attribute]
+
+    loadedMap = dict()
+
+    for location in mapPaths.keys():
+
+        locationEdges = mapPaths[location]
+
+        # edge connections include the destination, cost, and obstruction
+        edgeConnections = []
+
+        for destination in locationEdges.keys():
+
+            destinationName = destination     
+
+            for destinationAttribute in locationEdges[destination]:
+
+                if destinationAttribute == "cost":
+                    destinationCost = locationEdges[destination][destinationAttribute]
+
+                elif destinationAttribute == "obstruction":
+                    destinationObstruction = locationEdges[destination][destinationAttribute]
+
+            edgeConnections.append( (destinationName, destinationCost, destinationObstruction) )
+
+        loadedMap[location] = edgeConnections
+
+    return loadedMap
+
+def execute(currentState, goalState):
 	""" Publishes the action to take towards the goal based on current state to the toc/action state """
 
+	# load map file
+	campusMap = load_json_map()
+
 	# initialize the MDP
-    route = RouteMDP(currentState, goalState, mapName)
+    route = RouteMDP(currentState, goalState, campusMap)
     route.initialize()
     route.solve()
 
