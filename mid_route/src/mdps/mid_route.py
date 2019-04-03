@@ -35,20 +35,7 @@ from nova.mdp_value_function import MDPValueFunction
 import itertools as it
 import ctypes as ct
 import numpy as np
-
-
 # import rospy
-
-
-def power_set(iterable):
-    """ Return the power set of any iterable (e.g., list) with set elements. """
-
-    s = list(iterable)
-    powerSet = it.chain.from_iterable(
-        it.combinations(s, r) for r in range(len(s) + 1))
-    powerSetList = [set(ele) for ele in list(powerSet)]
-    return powerSetList
-
 
 class RouteMDP(object):
     """ The high-level route MDP that decides path for delivery. """
@@ -88,6 +75,15 @@ class RouteMDP(object):
             result += "Not yet defined.\n\n"
 
         return result
+
+    def power_set(iterable):
+        """ Return the power set of any iterable (e.g., list) with set elements. """
+
+        s = list(iterable)
+        powerSet = it.chain.from_iterable(
+            it.combinations(s, r) for r in range(len(s) + 1))
+        powerSetList = [set(ele) for ele in list(powerSet)]
+        return powerSetList
 
     def _compute_states(self):
         """ Compute the set of states from the state factores for the RouteMDP.

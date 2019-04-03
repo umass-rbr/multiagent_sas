@@ -1,10 +1,33 @@
 #!/usr/bin/env python
 import rospy
-from std_msgs.msg import String
+import os
+
+current_file_path = os.path.dirname(os.path.realpath(__file__))
+
+from mid_route.msg import TocMdpState, TocMdpAction
+from mid_route.src.mdps import RouteMDP
 
 
-def callback(data):
-    rospy.loginfo(rospy.get_caller_id() + 'I heard %s', data.data)
+toc_mdp_state_message = None
+
+TOC_ACTION_PUBLISHER = rospy.Publisher("orb_nav/goal", TocMdpAction, queue_size=1)
+
+def toc_mdp_state_callback(message):
+    global toc_mdp_state_message
+    toc_mdp_state_message = message
+
+def execute(currentState, goalState, mapName):
+
+    route = RouteMDP(currentState, goalState, mapName)
+    route.initialize()
+    route.solve()
+    action = route.get_action(currentState)
+
+    actionMessage = TocMdpAction()
+    actionMessage.location = action[0]
+    actionMessage.control = action[1] 
+
+    TOC_ACTION_PUBLISHER.publish(actionMessage)
 
 
 def main():
