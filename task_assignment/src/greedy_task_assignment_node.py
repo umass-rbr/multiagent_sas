@@ -2,7 +2,6 @@
 import json
 
 import rospy
-
 import utils
 from robot import Robot, RobotType
 from task_assignment.msg import TaskAssignmentAction, WorldState

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import rospy
-
 from task_assignment.msg import WorldState
 
 

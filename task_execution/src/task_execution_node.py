@@ -3,14 +3,16 @@ import json
 import os
 import rospy
 
-current_file_path = os.path.dirname(os.path.realpath(__file__))
+import roslib
+roslib.load_manifest('jackal_msgs_amrl')
 
-import roslib; roslib.load_manifest('jackal_msgs_amrl')
 from jackal_msgs_amrl.msg import NavGoal
 
 from task_handler import DeliveryTaskHandler, EscortTaskHandler
 from task_assignment.msg import TaskAssignmentAction
 from task_execution.msg import DeliveryMdpState, EscortMdpState, InterfaceAction, RobotStatus, TaskStatus
+
+CURRENT_FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 
 NAVIGATION_ACTION_PUBLISHER = rospy.Publisher("orb_nav/goal", NavGoal, queue_size=1)
 INTERFACE_ACTION_PUBLISHER = rospy.Publisher("task_execution/interface_action", InterfaceAction, queue_size=1)
@@ -42,8 +44,9 @@ def escort_mdp_state_callback(message):
     escort_mdp_state_message = message
 
 
+# TODO Implement this function
 def get_world_map():
-    with open(current_file_path + '/tmp/LGRC3_plan_map.json') as world_map_file:
+    with open(CURRENT_FILE_PATH + '/tmp/LGRC3_plan_map.json') as world_map_file:
         return json.load(world_map_file)
 
 
@@ -80,8 +83,6 @@ def execute(task_assignment):
             new_state = task_handler.get_state(message_selector())
             new_state = (new_state[0], has_package)
             rospy.loginfo("Info[task_execution_node.execute]: Retrieved the current state: %s", new_state)
-            if current_action:
-                rospy.loginfo("Info[task_execution_node.execute]: Executing the current action: %s", current_action)
 
             if new_state != current_state:
                 current_state = new_state
@@ -100,14 +101,12 @@ def execute(task_assignment):
                     break
                 else:
                     action_message = NavGoal()
-                    action_message.header.stamp = rospy.Time.now()
-                    action_message.header.frame_id = "/task_execution_node"
                     action_message.x = world_map["locations"][current_action]["pose"]["x"]
                     action_message.y = world_map["locations"][current_action]["pose"]["y"]
 
                     rospy.loginfo("Info[task_execution_node.execute]: Executing the current action: %s", current_action)
                     NAVIGATION_ACTION_PUBLISHER.publish(action_message)
-                
+
                 activation_time = rospy.Time.now()
 
             task_status_message = TaskStatus()
