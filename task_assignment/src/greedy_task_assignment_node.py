@@ -63,23 +63,21 @@ def generate_assignments(tasks, robots):
     return feasible_assignments
 
 
-def calculate_expected_cost(assignment, world_map):
+def calculate_expected_cost(assignment, distance_map):
     cost = 0
 
     for task, robot in assignment:
-        break_probability = robot.get_break_probability(task.pickup_location, task.dropoff_location)
-        time = robot.get_time_duration(world_map, task.pickup_location, task.dropoff_location)
-        cost += 1000 * break_probability + time * (1 - break_probability)
+        cost += robot.get_cost(distance_map, [task.pickup_location, task.dropoff_location])
 
     return cost
 
 
-def find_best_assignment(tasks, assignments, world_map):
+def find_best_assignment(tasks, assignments, distance_map):
     best_assignment = None
     best_expected_cost = float('inf')
 
     for assignment in assignments:
-        expected_cost = calculate_expected_cost(assignment, world_map) + 1000 * (len(tasks) - len(assignment))
+        expected_cost = calculate_expected_cost(assignment, distance_map) + 1000 * (len(tasks) - len(assignment))
 
         if expected_cost < best_expected_cost:
             best_assignment = assignment
@@ -108,13 +106,14 @@ def assign(world_state):
     available_robots = get_available_robots(world_state.robot_status)
 
     world_map = get_world_map()
+    distance_map = utils.get_distance_map(world_map)
 
     if available_robots:
         rospy.loginfo('Info[greedy_task_assignment_node.assign]: Generating tasks assignments...')
         assignments = generate_assignments(tasks, available_robots)
 
         rospy.loginfo('Info[greedy_task_assignment_node.assign]: Determining best assignments...')
-        best_assignment, best_cost = find_best_assignment(tasks, assignments, world_map)
+        best_assignment, best_cost = find_best_assignment(tasks, assignments, distance_map)
 
         rospy.loginfo('Info[greedy_task_assignment_node.assign]: Publishing assignments...')
         for task, robot in best_assignment:
@@ -141,6 +140,4 @@ def main():
 
 
 if __name__ == '__main__':
-    print(get_world_map())
-    quit()
     main()

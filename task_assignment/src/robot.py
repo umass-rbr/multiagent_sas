@@ -15,22 +15,13 @@ class Robot(object):
     def get_name(self):
         return self.name
 
-    def get_break_probability(self, start_location, end_location):
-        if self.type == RobotType.TURTLEBOT:
-            return 0.2 if start_location != end_location else 0.05
+    def get_cost(self, distance_map, trajectory):
+        cost = 0
 
-        if self.type == RobotType.JACKAL:
-            return 0.05 if start_location != end_location else 0.2
-
-        return 0
-
-    def get_time_duration(self, world_map, start_location, end_location):
-        cost = world_map['paths'][start_location][end_location]['cost']
+        for i in range(len(trajectory) - 1):
+            cost += distance_map[trajectory[i]][trajectory[i + 1]]
 
         if self.type == RobotType.TURTLEBOT:
-            return 2 * cost if start_location != end_location else cost
+            return 2 * cost
 
-        if self.type == RobotType.JACKAL:
-            return cost if start_location != end_location else 2 * cost
-
-        return 4 * cost
+        return cost
