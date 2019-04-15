@@ -3,10 +3,7 @@
 import sys
 import json
 
-from math import inf
 from itertools import product
-
-from IPython import embed
 
 def floyd_warshall(input_map):
 	_map = json.load( open(input_map, mode='r+') )
@@ -37,7 +34,7 @@ def floyd_warshall(input_map):
 
 	all_pairs_shortest_path_map = json.dumps(dist, indent=4)
 
-	ofile = open("all_pairs_shortest_path_"+input_map, "w+")
+	ofile = open("all_pairs_shortest_path_map.json", "w+")
 	ofile.write(all_pairs_shortest_path_map)
 	ofile.close()
 
