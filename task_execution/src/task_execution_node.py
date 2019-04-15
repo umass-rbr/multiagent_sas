@@ -10,10 +10,12 @@ from jackal_msgs_amrl.msg import NavGoal
 
 from task_handler import DeliveryTaskHandler, EscortTaskHandler
 from task_assignment.msg import TaskAssignmentAction
-from task_execution.msg import DeliveryMdpState, EscortMdpState, InterfaceAction
+from task_execution.msg import DeliveryMdpState, EscortMdpState, InterfaceAction, RobotStatus, TaskStatus
 
 NAVIGATION_ACTION_PUBLISHER = rospy.Publisher("orb_nav/goal", NavGoal, queue_size=1)
 INTERFACE_ACTION_PUBLISHER = rospy.Publisher("task_execution/interface_action", InterfaceAction, queue_size=1)
+ROBOT_STATUS_PUBLISHER = rospy.Publisher("monitor/robot_status", RobotStatus, queue_size=1)
+TASK_STATUS_PUBLISHER = rospy.Publisher("monitor/task_status", TaskStatus, queue_size=1)
 
 TASK_MAP = {
     "delivery": {
@@ -98,22 +100,46 @@ def execute(task_assignment):
                     break
                 else:
                     action_message = NavGoal()
-                    #action_message.header.stamp = rospy.Time.now()
-                    #action_message.header.frame_id = "/task_execution_node"
+                    action_message.header.stamp = rospy.Time.now()
+                    action_message.header.frame_id = "/task_execution_node"
                     action_message.x = world_map["locations"][current_action]["pose"]["x"]
                     action_message.y = world_map["locations"][current_action]["pose"]["y"]
 
-                    #rospy.loginfo("Info[task_execution_node.execute]: Executing the current action: %s", current_action)
+                    rospy.loginfo("Info[task_execution_node.execute]: Executing the current action: %s", current_action)
                     NAVIGATION_ACTION_PUBLISHER.publish(action_message)
                 
                 activation_time = rospy.Time.now()
+
+            task_status_message = TaskStatus()
+            task_status_message.id = 5
+            task_status_message.status = "In Progress"
+            TASK_STATUS_PUBLISHER.publish(task_status_message)
+
+            robot_status_message = RobotStatus()
+            robot_status_message.id = robot_id
+            robot_status_message.status = "Unavilable"
+            robot_status_message.x = world_map["locations"][current_state[0]]["pose"]["x"]
+            robot_status_message.y = world_map["locations"][current_state[0]]["pose"]["y"] 
+            ROBOT_STATUS_PUBLISHER.publish(robot_status_message)
 
             current_time = rospy.Time.now()
             if current_time - activation_time > rospy.Duration(timeout_duration):
                 raise RuntimeError("Exceeded the time limit to execute the task")
 
             rospy.sleep(wait_duration)
-        
+
+        task_status_message = TaskStatus()
+        task_status_message.id = 5
+        task_status_message.status = "Complete"
+        TASK_STATUS_PUBLISHER.publish(task_status_message)
+
+        robot_status_message = RobotStatus()
+        robot_status_message.id = robot_id
+        robot_status_message.status = "Available"
+        robot_status_message.x = world_map["locations"][current_state[0]]["pose"]["x"]
+        robot_status_message.y = world_map["locations"][current_state[0]]["pose"]["y"] 
+        ROBOT_STATUS_PUBLISHER.publish(robot_status_message)
+
         rospy.loginfo("Info[task_execution_node.execute]: Reached the goal :)")
 
 
