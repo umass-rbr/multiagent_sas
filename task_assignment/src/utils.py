@@ -1,6 +1,4 @@
-import itertools as it
-import json
-import sys
+import itertools
 
 
 def get_cartesian_product(A, B):
@@ -8,14 +6,13 @@ def get_cartesian_product(A, B):
 
 
 def get_power_set(A):
-    return list(it.chain.from_iterable(it.combinations(A, size) for size in range(len(A) + 1)))
+    return list(itertools.chain.from_iterable(itertools.combinations(A, size) for size in range(len(A) + 1)))
 
 
+# TODO Replace all one-letter variables with names (like location, start_location, and end_location)
 def get_distance_map(world_map):
     V = list(world_map["locations"].keys())
     E = {key: {} for key in V}
-
-    n = len(V)
 
     for start in world_map["paths"].keys():
         for end in world_map["paths"][start].keys():
