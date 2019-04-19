@@ -83,29 +83,34 @@ def find_best_assignment(tasks, assignments, distance_map):
     return best_assignment, best_expected_cost
 
 
-def get_tasks(task_requests):
+def get_tasks(task_info):
     tasks = []
 
-    for task_request in task_requests:
-        task_handler = TASK_MAP[task_request.type]['task_handler']
-        task = task_handler.get_task(task_request.id, task_request.start_time, task_request.end_time, task_request, json.loads(task_request.data))
-        tasks.append(task)
+    for key in task_info.keys():
+        if task_info[key]['status'] == 'available':
+            task_request = task_info[key]['task_request']
+            task_handler = TASK_MAP[task_request['type']]['task_handler']
+            task = task_handler.get_task(key, task_request['start_time'], task_request['end_time'], json.loads(task_request['data']))
+            tasks.append(task)
 
     return tasks
 
 
-def get_available_robots(robot_status):
-    return [robot for i, robot in enumerate(ROBOTS) if robot_status[i]]
+def get_available_robots(robot_info):
+    return [robot for i, robot in enumerate(ROBOTS) if robot_info[robot][status] == 'available']
 
 
-def assign(world_state):
-    tasks = get_tasks(world_state.task_requests)
-    available_robots = get_available_robots(world_state.robot_status)
+def assign(info):
+    tasks = get_tasks(info['tasks'])
+    available_robots = get_available_robots(info['robots'])
 
     world_map = get_world_map()
     distance_map = utils.get_distance_map(world_map)
 
     if available_robots:
+        for robot in available_robots:
+            robot.set_loc(info['robots'][robot.name]['x'], info['robots'][robot.name]['y'])
+
         rospy.loginfo('Info[greedy_task_assignment_node.assign]: Generating tasks assignments...')
         assignments = generate_assignments(tasks, available_robots)
 
@@ -127,13 +132,15 @@ def assign(world_state):
 
 
 def main():
-    rospy.init_node('task_assigner_node', anonymous=True)
-    rospy.loginfo('Info[greedy_task_assignment_node.main]: Instantiated the task_assignment node')
+    with open('task_and_robot_status_info.json') as f:
+        info = json.loads(f)
 
-    rospy.Subscriber('monitor/world_state', WorldState, assign, queue_size=1)
+        task_statuses = info['tasks']
+        robot_statuses = info['robots']
 
-    rospy.loginfo('Info[greedy_task_assignment_node.main]: Spinning...')
-    rospy.spin()
+        manager_endpoint = 'https://temporary_uri.com/tmp'
+
+
 
 
 if __name__ == '__main__':

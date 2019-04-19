@@ -11,9 +11,16 @@ class Robot(object):
     def __init__(self, name, type):
         self.name = name
         self.type = type
+        self.loc = None
 
     def get_name(self):
         return self.name
+
+    def set_loc(self, x, y):
+        self.loc = (x,y)
+        
+    def get_loc(self):
+        return self.loc
 
     def get_cost(self, distance_map, trajectory):
         cost = 0

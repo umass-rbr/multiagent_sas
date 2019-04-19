@@ -1,0 +1,43 @@
+{
+	"tasks": {
+		"0": {
+			"status": "available",
+			"task_request": {
+				"type": "delivery",
+				"start_time": 0,
+				"end_time": 10,
+				"data": {
+					"package": "mail",
+					"pickup": "AMRL",
+					"dropoff": "RBR"
+				}
+			}
+		},
+        "1": {
+            "status": "available",
+            "task_request": {
+                "type": "escort",
+                "start_time": 3,
+                "end_time": 6,
+                "data": {
+                    "person": "Joydeep",
+                    "pickup": "JoydeepOffice",
+                    "dropoff": "ShlomoOffice"
+                }
+            }
+        }
+	},
+
+	"robots": {
+		"Jackal": {
+			"status": "available",
+			"x": 34.67,
+			"y": 18.25
+		},
+		"Cobot": {
+			"status": "available",
+			"x": 23.54,
+			"y": 28.66
+		}
+	}
+}
