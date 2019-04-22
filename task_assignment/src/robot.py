@@ -16,8 +16,8 @@ class Robot(object):
     def get_name(self):
         return self.name
 
-    def set_loc(self, x, y):
-        self.loc = (x,y)
+    def set_loc(self, location):
+        self.loc = location
         
     def get_loc(self):
         return self.loc

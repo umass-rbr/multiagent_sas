@@ -1,0 +1,125 @@
+{
+    "name": "LGRC_3rd", 
+    "locations": {
+        "AMRL": {
+            "pose": {
+                "y": 49.17, 
+                "x": 26.4, 
+                "theta": 0.0
+            }, 
+            "name": "AMRL"
+        }, 
+        "LPR": {
+            "pose": {
+                "y": 33.1, 
+                "x": 25.8, 
+                "theta": 0.0
+            }, 
+            "name": "LPR"
+        }, 
+        "RBR": {
+            "pose": {
+                "y": 64.4, 
+                "x": 26.6, 
+                "theta": 0.0
+            }, 
+            "name": "RBR"
+        }, 
+        "OfficeJoydeep": {
+            "pose": {
+                "y": 5.4, 
+                "x": 17.8, 
+                "theta": 0.0
+            }, 
+            "name": "OfficeJoydeep"
+        }, 
+        "OfficeShlomo": {
+            "pose": {
+                "y": 78.26, 
+                "x": 19.7, 
+                "theta": 0.0
+            }, 
+            "name": "OfficeShlomo"
+        }, 
+        "Lobby": {
+            "pose": {
+                "y": 19.87, 
+                "x": 22.6, 
+                "theta": 0.0
+            }, 
+            "name": "Lobby"
+        }
+    },
+    "paths": {
+        "AMRL": {
+            "LPR": {
+                "obstruction": "none", 
+                "cost": 15
+            },
+            "RBR": {
+                "obstruction": "none", 
+                "cost": 15
+            }
+        }, 
+        "OfficeShlomo": {
+            "OfficeJoydeep": {
+                "obstruction": "door", 
+                "cost": 50
+            },
+            "Lobby": {
+                "obstruction": "door", 
+                "cost": 45
+            },
+            "RBR": {
+                "obstruction": "none", 
+                "cost": 15
+            }
+
+        }, 
+        "RBR": {
+            "OfficeShlomo": {
+                "obstruction": "none", 
+                "cost": 15
+            },
+            "AMRL": {
+                "obstruction": "none", 
+                "cost": 15
+            }
+        }, 
+        "LPR": {
+            "Lobby": {
+                "obstruction": "none", 
+                "cost": 15
+            },
+            "AMRL": {
+                "obstruction": "none", 
+                "cost": 15
+            }
+        }, 
+        "Lobby": {
+            "OfficeShlomo": {
+                "obstruction": "door", 
+                "cost": 45
+            },
+            "OfficeJoydeep": {
+                "obstruction": "none", 
+                "cost": 15
+            },
+            "LPR": {
+                "obstruction": "none", 
+                "cost": 15
+            }
+
+        },
+        "OfficeJoydeep": {
+            "Lobby": {
+                "obstruction": "none",
+                "cost": 15
+            },
+            "OfficeShlomo": {
+                "obstruction": "door",
+                "cost": 50
+            }
+        }
+    }
+}

@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 import json
+import os
 
 import rospy
 import utils
 from robot import Robot, RobotType
 from task_assignment.msg import TaskAssignmentAction, WorldState
 from task_handler import DeliveryTaskHandler, EscortTaskHandler
+
+CURRENT_FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 
 PUBLISHER = rospy.Publisher('task_assignment/task_assignment_action', TaskAssignmentAction, queue_size=1)
 
@@ -19,14 +22,14 @@ TASK_MAP = {
 }
 
 # TODO Implement a topic or service that has this information
-PUMPKIN = Robot('pumpkin', RobotType.TURTLEBOT)
-JAKE = Robot('jake', RobotType.JACKAL)
-SHLOMO = Robot('human', RobotType.HUMAN)
+PUMPKIN = Robot('Pumpkin', RobotType.TURTLEBOT)
+JAKE = Robot('Jackal', RobotType.JACKAL)
+SHLOMO = Robot('Human', RobotType.HUMAN)
 ROBOTS = [PUMPKIN, JAKE, SHLOMO]
 
 
 def get_world_map():
-    with open('../tmp/LRGC3_plan_map.json') as world_map_file:
+    with open(CURRENT_FILE_PATH + '/tmp/LGRC3_plan_map.json') as world_map_file:
         return json.load(world_map_file)
 
 
@@ -64,7 +67,7 @@ def calculate_expected_cost(assignment, distance_map):
     cost = 0
 
     for task, robot in assignment:
-        cost += robot.get_cost(distance_map, [robot.get_loc, task.pickup_location, task.dropoff_location])
+        cost += robot.get_cost(distance_map, [robot.get_loc(), task.pickup_location, task.dropoff_location])
 
     return cost
 
@@ -90,14 +93,14 @@ def get_tasks(task_info):
         if task_info[key]['status'] == 'available':
             task_request = task_info[key]['task_request']
             task_handler = TASK_MAP[task_request['type']]['task_handler']
-            task = task_handler.get_task(key, task_request['start_time'], task_request['end_time'], json.loads(task_request['data']))
+            task = task_handler.get_task(key, task_request['start_time'], task_request['end_time'], 'request', task_request['data'])
             tasks.append(task)
 
     return tasks
 
 
 def get_available_robots(robot_info):
-    return [robot for i, robot in enumerate(ROBOTS) if robot_info[robot][status] == 'available']
+    return [robot for robot in ROBOTS if robot_info[robot.name]['status'] == 'available']
 
 
 def assign(info):
@@ -109,7 +112,7 @@ def assign(info):
 
     if available_robots:
         for robot in available_robots:
-            robot.set_loc(info['robots'][robot.name]['x'], info['robots'][robot.name]['y'])
+            robot.set_loc(info['robots'][robot.name]['location'])
 
         rospy.loginfo('Info[greedy_task_assignment_node.assign]: Generating tasks assignments...')
         assignments = generate_assignments(tasks, available_robots)
@@ -118,31 +121,33 @@ def assign(info):
         best_assignment, best_cost = find_best_assignment(tasks, assignments, distance_map)
 
         rospy.loginfo('Info[greedy_task_assignment_node.assign]: Publishing assignments...')
-        for task, robot in best_assignment:
-            message = TaskAssignmentAction()
-            message.header.stamp = rospy.Time.now()
-            message.header.frame_id = "/greedy_task_assignment_node"
-            message.robot_id = robot.get_name()
-            message.task_request = task.get_task_request()
+        # for task, robot in best_assignment:
+        #     message = TaskAssignmentAction()
+        #     message.header.stamp = rospy.Time.now()
+        #     message.header.frame_id = "/greedy_task_assignment_node"
+        #     message.robot_id = robot.get_name()
+        #     message.task_request = task.get_task_request()
 
-            rospy.loginfo('Info[greedy_task_assignment_node.assign]: Publishing the assignment: %s', message)
-            PUBLISHER.publish(message)
+        #     rospy.loginfo('Info[greedy_task_assignment_node.assign]: Publishing the assignment: %s', message)
+        #     PUBLISHER.publish(message)
 
     return best_assignment, best_cost
 
 
 def main():
-    with open('task_and_robot_status_info.json') as f:
+    with open('tmp/task_and_robot_status_info.json') as f:
         manager_endpoint = ''
 
-        info = json.loads(f)
-        assignment = assign(info)
+        info = json.load(f)
+        assignment, _ = assign(info)
 
         data = {}
         for task, robot in assignment:
-            data[task.id] = robot.name
+            data[robot.get_name()] = task.id
 
-        r = request.post(url = manager_endpoint, data = data)
+        print(data)
+
+        #r = request.post(url = manager_endpoint, data = data)
 
 if __name__ == '__main__':
     main()

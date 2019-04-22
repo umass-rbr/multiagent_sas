@@ -8,8 +8,8 @@
 				"end_time": 10,
 				"data": {
 					"package": "mail",
-					"pickup": "AMRL",
-					"dropoff": "RBR"
+					"pickup_location": "AMRL",
+					"dropoff_location": "RBR"
 				}
 			}
 		},
@@ -21,8 +21,8 @@
                 "end_time": 6,
                 "data": {
                     "person": "Joydeep",
-                    "pickup": "JoydeepOffice",
-                    "dropoff": "ShlomoOffice"
+                    "pickup_location": "OfficeJoydeep",
+                    "dropoff_location": "OfficeShlomo"
                 }
             }
         }
@@ -31,13 +31,15 @@
 	"robots": {
 		"Jackal": {
 			"status": "available",
-			"x": 34.67,
-			"y": 18.25
+			"location": "OfficeJoydeep"
 		},
-		"Cobot": {
+		"Pumpkin": {
 			"status": "available",
-			"x": 23.54,
-			"y": 28.66
+			"location": "AMRL"
+		},
+		"Human": {
+			"status": "unavailable",
+			"location": "OfficeShlomo"
 		}
 	}
 }
