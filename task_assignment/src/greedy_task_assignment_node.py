@@ -64,7 +64,7 @@ def calculate_expected_cost(assignment, distance_map):
     cost = 0
 
     for task, robot in assignment:
-        cost += robot.get_cost(distance_map, [task.pickup_location, task.dropoff_location])
+        cost += robot.get_cost(distance_map, [robot.get_loc, task.pickup_location, task.dropoff_location])
 
     return cost
 
@@ -133,15 +133,16 @@ def assign(info):
 
 def main():
     with open('task_and_robot_status_info.json') as f:
+        manager_endpoint = ''
+
         info = json.loads(f)
+        assignment = assign(info)
 
-        task_statuses = info['tasks']
-        robot_statuses = info['robots']
+        data = {}
+        for task, robot in assignment:
+            data[task.id] = robot.name
 
-        manager_endpoint = 'https://temporary_uri.com/tmp'
-
-
-
+        r = request.post(url = manager_endpoint, data = data)
 
 if __name__ == '__main__':
     main()
