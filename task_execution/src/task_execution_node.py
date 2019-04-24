@@ -110,7 +110,7 @@ def execute(task_assignment):
                 activation_time = rospy.Time.now()
 
             task_status_message = TaskStatus()
-            task_status_message.id = 5
+            task_status_message.id = '5'
             task_status_message.status = "In Progress"
             TASK_STATUS_PUBLISHER.publish(task_status_message)
 
@@ -128,7 +128,7 @@ def execute(task_assignment):
             rospy.sleep(wait_duration)
 
         task_status_message = TaskStatus()
-        task_status_message.id = 5
+        task_status_message.id = '5'
         task_status_message.status = "Complete"
         TASK_STATUS_PUBLISHER.publish(task_status_message)
 
