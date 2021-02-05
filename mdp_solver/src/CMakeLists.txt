@@ -13,6 +13,7 @@ include_directories(
 
 add_message_files(
   FILES
+  IntrospectivePerceptionInfo
 )
 
 generate_messages(

@@ -6,7 +6,7 @@ import roslib
 import pickle
 import numpy as np
 
-from message_directory import MDPSolverResponse, MDPSolverRequest
+from mdp_solver.msgs import MDPSolverResponse, MDPSolverRequest
 
 CURRENT_FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(CURRENT_FILE_PATH, '..'))
@@ -14,7 +14,6 @@ sys.path.append(os.path.join(CURRENT_FILE_PATH, '..'))
 MAP_PATH = os.path.join(CURRENT_FILE_PATH, '..', 'maps', 'map.json')
 
 MDP_RESPONSE_PUBLISHER = rospy.Publisher("mdp_solver/plan", MDPSolverResponse, queue_size=1)
-TASK_STATUS_PUBLISHER = rospy.Publisher("monitor/task_status", TaskStatus, queue_size=1)
 
 STATIC_MAP = None
 current_request_info = None
