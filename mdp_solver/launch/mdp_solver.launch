@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<launch>
+  <node pkg="mdp_solver" type="mdp_solver_node.py" name="mdp_solver_node" output="screen">
+    <param name="wait_duration" value="1" />
+    <param name="timeout_duration" value="1000" />
+  </node>
+</launch>
