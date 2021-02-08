@@ -1,5 +1,5 @@
 import numpy as np
-
+from IPython import embed
 def FVI(mdp, eps = 0.001):
     """
         This is a fast value iteration using vectorized operations only.
@@ -16,10 +16,10 @@ def FVI(mdp, eps = 0.001):
 
     dim_array = np.ones((1, T.ndim), int).ravel()
     dim_array[2] = -1
-
     while True:
         Q = R + gamma*( np.sum( T * V.reshape(dim_array), axis = 2) )
         tmp = np.amax(Q, axis = 1)
+        print(tmp)
         if np.max( abs(tmp - V) ) < eps:
             V = tmp
             break

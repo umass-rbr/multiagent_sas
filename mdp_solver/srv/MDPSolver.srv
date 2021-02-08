@@ -1,0 +1,5 @@
+string map_info
+uint8 start
+uint8 goal
+---
+uint16[] plan

@@ -1,16 +1,14 @@
 import os, sys, time, json, pickle, random
-
-from collections import defaultdict
 from IPython import embed
+from collections import defaultdict
 import numpy as np
-import pandas as pd
 import itertools as it
 
 current_file_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(current_file_path, '..', '..'))
 
 # from CDB_ma.domain_helper import Helper
-from scripts.utils import FVI
+from utils import FVI
 
 DOMAIN_PATH = os.path.join(current_file_path, '..', '..', '..', 'domains', 'CDB_ps')
 MAP_PATH = os.path.join(DOMAIN_PATH, 'maps')
@@ -26,14 +24,15 @@ def list_to_dic(list):
     node_dic = {}
     for ele in list:
         node_dic[ele['id']] =  {'loc': ele['loc']}
+    return node_dic
 
 def point_to_line_dist(p1, p2, p3):
     p1, p2, p3 = np.array(p1), np.array(p2), np.array(p3)
     d=np.cross(p2-p1,p3-p1)/norm(p2-p1)
-
+    return d
 
 class PathDomainModel():
-    def __init__(self, map_info, error_info, gamma=1.0):
+    def __init__(self, map_info, error_info, gamma=0.99):
         self.gamma = gamma
         self.error_info = error_info
         self.vertices, self.edges = list_to_dic(map_info['nodes']), map_info['edges']
@@ -41,14 +40,13 @@ class PathDomainModel():
         self._init, self._goal = None, None
         self._transitions, self._costs = None, None
         # self.check_validity()
-
         self.pi, self.V, self.Q, self.state_map = None, None, None, None
 
 
     def generate_states(self):
         states = []
         for k,vertex in self.vertices.items():
-            states.append((k, vertex['loc']['x'], vertex['loc'['y']]))
+            states.append((k, vertex['loc']['x'], vertex['loc']['y']))
         return states + ['FAILURE']
 
 
@@ -59,18 +57,19 @@ class PathDomainModel():
 
     def generate_actions(self):
         actions = []
-        for edge in self.edges.values():
+        for edge in self.edges:
             actions.append((edge['s0_id'], edge['s1_id']))
+            actions.append((edge['s1_id'], edge['s0_id']))
         return actions
 
 
     @property
     def actions(self):
         return self._actions
-    
-
+   
+ 
     def set_init(self, node_id):
-        self.init = tuple(node_id, self.vertices[node_id]['loc']['x'], self.vertices[node_id]['loc']['y'])
+        self._init = (node_id, self.vertices[node_id]['loc']['x'], self.vertices[node_id]['loc']['y'])
 
 
     @property
@@ -79,7 +78,7 @@ class PathDomainModel():
     
 
     def set_goal(self, node_id):
-        self.goal = tuple(node_id, self.vertices[node_id]['loc']['x'], self.vertices[node_id]['loc']['y'])
+        self._goal = (node_id, self.vertices[node_id]['loc']['x'], self.vertices[node_id]['loc']['y'])
 
 
     @property
@@ -110,7 +109,7 @@ class PathDomainModel():
                     T[s][a][s] = 1.0
                     continue
                 else:
-                    statePrime = (action[1], self.nodes[action[1]]['loc']['x'], self.nodes[action[1]]['loc']['y'])
+                    statePrime = (action[1], self.vertices[action[1]]['loc']['x'], self.vertices[action[1]]['loc']['y'])
                     sp = self.states.index(statePrime)
                     T[s][a][sp] = 1.0
                     if state[0] in self.error_info.keys() and action[1] in self.error_info[state[0]].keys():
@@ -123,22 +122,26 @@ class PathDomainModel():
 
 
     @property
-    def transition(self):
-        return self._transition
+    def transitions(self):
+        return self._transitions
     
 
     def compute_costs(self):
-        C = np.array([[1.0 for a in range(len(self.actions))] 
+        C = np.array([[10. for a in range(len(self.actions))] 
                            for s in range(len(self.states))])
 
         for s, state in enumerate(self.states):
             for e, edge in enumerate(self.edges):
                 if edge['s0_id'] == state[0]:
                     action = (edge['s0_id'], edge['s1_id'])
-                    a = self.actions.index(action)
-                    C[s][a] = (dist(self.V[str(action[0])]['loc']['x'], self.V[str(action[0])]['loc']['y'],
-                            self.V[str(action[1])]['loc']['x'], self.V[str(action[1])]['loc']['x'])/ edge['max_speed'])
-
+                elif edge['s1_id'] == state[0]:
+                    action = (edge['s1_id'], edge['s0_id'])
+                else:
+                    continue
+                a = self.actions.index(action)
+                C[s][a] = (dist(self.vertices[action[0]]['loc']['x'], self.vertices[action[0]]['loc']['y'],
+                        self.vertices[action[1]]['loc']['x'], self.vertices[action[1]]['loc']['x'])/ edge['max_speed'])
+        C[self.states.index('FAILURE')] *= 100.0
         C[self.states.index(self.goal)] *= 0.0
 
         self._costs = C
@@ -173,6 +176,12 @@ class PathDomainModel():
         self.state_map = mdp_info['state map']
         self.V = mdp_info['V']
         self.Q = mdp_info['Q']
+
+
+    def query_pi(self, state):
+        s_index = self._states.index(state)
+        action = self.pi[s_index]
+        return action
 
 
     def generate_successor(self, state, action):

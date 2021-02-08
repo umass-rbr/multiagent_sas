@@ -1,15 +1,17 @@
 #!/usr/bin/env python
 import json
-import os
+import os, sys
 import rospy
 import roslib
 import pickle
 import numpy as np
-
-from mdp_solver.msgs import MDPSolverResponse, MDPSolverRequest
-
+from IPython import embed
 CURRENT_FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(CURRENT_FILE_PATH, '..'))
+
+from mdp_solver.srv import MDPSolver, MDPSolverResponse
+from mdp_solver.msg import IntrospectivePerceptionInfo
+from mdps.path_planning_mdp import PathDomainModel
 
 MAP_PATH = os.path.join(CURRENT_FILE_PATH, '..', 'maps', 'map.json')
 
@@ -45,8 +47,7 @@ def execute(request):
     rospy.loginfo("Info[mdp_solver_node.execute]: Received a new solver request: %s", request)
     global current_request_info
     current_request_info = request
-
-    map_info = json.loads(request.map)
+    map_info = json.loads(request.map_info)
     init_node_id = request.start
     goal_node_id = request.goal
 
@@ -55,36 +56,35 @@ def execute(request):
     mdp.set_init(init_node_id)
     mdp.set_goal(goal_node_id)
     mdp.reset()
+    mdp.check_validity()
 
-    # rospy.loginfo("Info[mdp_solver_node.execute]: Solving perception sensitive mdp...")
-    # ps_path_mdp = PerceptionSensitiveMDP(base_path_mdp, current_ip_error_info)
-    # ps_path_mdp.solve()
+    rospy.loginfo("Info[mdp_solver_node.execute]: Solving mdp...")
+    mdp.solve()
 
     plan = []
     state = mdp.init
     while state != mdp.goal:
-        plan.append(state[0][0])
-        state = mdp.generate_successor(mdp.pi[mdp.states.index(states)])
-    plan.append(state[0][0])
+        print(plan)
+        plan.append(state[0])
+        state = mdp.generate_successor(state, mdp.query_pi(state))
+    plan.append(state[0])
 
-    response = MDPSolverResponse()
-    response.plan = plan
-    MDP_RESPONSE_PUBLISHER.publish(response)
+    return MDPSolverResponse(plan)
 
 
-def main():
+def mdp_solver_server():
     rospy.loginfo("Info[mdp_solver.main]: Instantiating the mdp_solver node...")
     rospy.init_node("mdp_solver_node", anonymous=True)
 
-    rospy.Subscriber("introspective_perception/error_callback", IntrospectivePerceptionInfo, ip_info_callback, queue_size=1)
+    # rospy.Subscriber("introspective_perception/error_callback", IntrospectivePerceptionInfo, ip_info_callback, queue_size=1)
 
-    load_static_map()
+    # load_static_map()
 
-    srv = rospy.Service('mdp_solver', MDPSolverRequest, execute)
+    srv = rospy.Service('mdp_solver', MDPSolver, execute)
 
     rospy.loginfo("Info[mdp_solver_node.main]: Spinning...")
     rospy.spin()
 
 
 if __name__ == '__main__':
-    main()
+   mdp_solver_server() 

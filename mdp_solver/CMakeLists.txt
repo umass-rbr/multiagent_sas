@@ -9,11 +9,17 @@ find_package(catkin REQUIRED COMPONENTS
 
 include_directories(
     ${catkin_INCLUDE_DIRS}
+    src
 )
 
 add_message_files(
   FILES
-  IntrospectivePerceptionInfo
+  IntrospectivePerceptionInfo.msg
+)
+
+add_service_files(
+  FILES
+  MDPSolver.srv
 )
 
 generate_messages(
