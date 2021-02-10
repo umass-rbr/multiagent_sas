@@ -1,0 +1,202 @@
+{
+    "edges": [
+        {
+            "has_door": false,
+            "has_stairs": false,
+            "max_clearance": 1.0,
+            "max_speed": 2.0,
+            "s0_id": 1,
+            "s1_id": 0
+        },
+        {
+            "has_door": false,
+            "has_stairs": false,
+            "max_clearance": 1.0,
+            "max_speed": 2.0,
+            "s0_id": 4,
+            "s1_id": 0
+        },
+        {
+            "has_door": false,
+            "has_stairs": false,
+            "max_clearance": 1.0,
+            "max_speed": 2.0,
+            "s0_id": 5,
+            "s1_id": 4
+        },
+        {
+            "has_door": false,
+            "has_stairs": false,
+            "max_clearance": 1.0,
+            "max_speed": 2.0,
+            "s0_id": 5,
+            "s1_id": 6
+        },
+        {
+            "has_door": false,
+            "has_stairs": false,
+            "max_clearance": 1.0,
+            "max_speed": 2.0,
+            "s0_id": 6,
+            "s1_id": 7
+        },
+        {
+            "has_door": false,
+            "has_stairs": false,
+            "max_clearance": 1.0,
+            "max_speed": 2.0,
+            "s0_id": 7,
+            "s1_id": 1
+        },
+        {
+            "has_door": false,
+            "has_stairs": false,
+            "max_clearance": 1.0,
+            "max_speed": 2.0,
+            "s0_id": 1,
+            "s1_id": 2
+        },
+        {
+            "has_door": false,
+            "has_stairs": false,
+            "max_clearance": 1.0,
+            "max_speed": 2.0,
+            "s0_id": 3,
+            "s1_id": 0
+        },
+        {
+            "has_door": false,
+            "has_stairs": false,
+            "max_clearance": 1.0,
+            "max_speed": 2.0,
+            "s0_id": 6,
+            "s1_id": 8
+        },
+        {
+            "has_door": false,
+            "has_stairs": false,
+            "max_clearance": 1.0,
+            "max_speed": 2.0,
+            "s0_id": 0,
+            "s1_id": 8
+        },
+        {
+            "has_door": false,
+            "has_stairs": false,
+            "max_clearance": 1.0,
+            "max_speed": 2.0,
+            "s0_id": 8,
+            "s1_id": 9
+        },
+        {
+            "has_door": false,
+            "has_stairs": false,
+            "max_clearance": 1.0,
+            "max_speed": 2.0,
+            "s0_id": 2,
+            "s1_id": 10
+        },
+        {
+            "has_door": false,
+            "has_stairs": false,
+            "max_clearance": 1.0,
+            "max_speed": 2.0,
+            "s0_id": 3,
+            "s1_id": 10
+        },
+        {
+            "has_door": false,
+            "has_stairs": false,
+            "max_clearance": 1.0,
+            "max_speed": 2.0,
+            "s0_id": 10,
+            "s1_id": 11
+        }
+    ],
+    "nodes": [
+        {
+            "id": 0,
+            "loc": {
+                "x": -0.020489631220698357,
+                "y": -0.05661338195204735
+            }
+        },
+        {
+            "id": 1,
+            "loc": {
+                "x": 2.2772867679595947,
+                "y": -85.80973815917969
+            }
+        },
+        {
+            "id": 2,
+            "loc": {
+                "x": 184.38999938964844,
+                "y": -87.0
+            }
+        },
+        {
+            "id": 3,
+            "loc": {
+                "x": 186.60000610351563,
+                "y": -5.869999885559082
+            }
+        },
+        {
+            "id": 4,
+            "loc": {
+                "x": 0.8399999737739563,
+                "y": 94.2300033569336
+            }
+        },
+        {
+            "id": 5,
+            "loc": {
+                "x": -181.1999969482422,
+                "y": 95.55999755859375
+            }
+        },
+        {
+            "id": 6,
+            "loc": {
+                "x": -184.39999389648438,
+                "y": -2.2799999713897705
+            }
+        },
+        {
+            "id": 7,
+            "loc": {
+                "x": -183.89999389648438,
+                "y": -85.9800033569336
+            }
+        },
+        {
+            "id": 8,
+            "loc": {
+                "x": -33.99113464355469,
+                "y": -0.4662569761276245
+            }
+        },
+        {
+            "id": 9,
+            "loc": {
+                "x": -34.02663040161133,
+                "y": 2.477433443069458
+            }
+        },
+        {
+            "id": 10,
+            "loc": {
+                "x": 185.33401489257813,
+                "y": -52.344696044921875
+            }
+        },
+        {
+            "id": 11,
+            "loc": {
+                "x": 182.954833984375,
+                "y": -52.279884338378906
+            }
+        }
+    ]
+}
